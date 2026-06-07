@@ -1,0 +1,2924 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/@vazirmatn/vazirmatn@33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Vazirmatn', 'Tahoma', 'Segoe UI', 'sans-serif'],
+                    mono: ['Tahoma', 'sans-serif'],
+                },
+                colors: {
+                    glass: {
+                        100: 'rgba(255,255,255,0.1)',
+                        200: 'rgba(255,255,255,0.2)',
+                        300: 'rgba(255,255,255,0.3)',
+                        border: 'rgba(255,255,255,0.4)',
+                    }
+                },
+            }
+        }
+    }
+    </script>
+    <style>
+        /* ===== ROOT VARIABLES ===== */
+        :root {
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --accent-glow: rgba(99,102,241,0.35);
+            --glass-bg: rgba(255,255,255,0.82);
+            --glass-border: rgba(255,255,255,0.92);
+            --glass-shadow: 0 8px 32px rgba(31,38,135,0.08), 0 2px 8px rgba(31,38,135,0.04), inset 0 1px 0 rgba(255,255,255,0.7);
+            --btn-shadow: 0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.75);
+        }
+        /* Theme: Blue (default) */
+        body.theme-blue { --accent: #3b82f6; --accent2: #6366f1; --accent-glow: rgba(59,130,246,0.35); }
+        body.theme-purple { --accent: #8b5cf6; --accent2: #a855f7; --accent-glow: rgba(139,92,246,0.35); }
+        body.theme-green { --accent: #10b981; --accent2: #059669; --accent-glow: rgba(16,185,129,0.35); }
+        body.theme-red { --accent: #ef4444; --accent2: #dc2626; --accent-glow: rgba(239,68,68,0.35); }
+        body.theme-orange { --accent: #f97316; --accent2: #ea580c; --accent-glow: rgba(249,115,22,0.35); }
+
+        /* ===== BODY ===== */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 40%, #f5f0ff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: hidden;
+            font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+            transition: background 0.6s ease, color 0.4s ease;
+            padding-bottom: 130px;
+            padding-top: 80px;
+        }
+        body.dark-mode {
+            background: linear-gradient(-45deg, #0a0f1e, #141928, #0d1117, #1a0f2e);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+            color: #e2e8f0;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ===== GLASS PANEL ===== */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1.5px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 1.5rem;
+        }
+        body.dark-mode .glass-panel {
+            background: rgba(20,25,48,0.55);
+            border: 1px solid rgba(255,255,255,0.07);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        /* ===== CALCULATOR BUTTONS - LED GLOW EFFECT ===== */
+        .btn-bubble {
+            background: rgba(255,255,255,0.75);
+            border: 1.5px solid rgba(255,255,255,0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Tahoma', 'Vazirmatn', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1;
+            box-shadow: var(--btn-shadow);
+            border-radius: 50%;
+        }
+        /* LED sweep on click — around/under button only */
+        .btn-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: conic-gradient(from 0deg, transparent 0%, var(--accent) 30%, var(--accent2) 60%, transparent 100%);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: all 0s;
+            pointer-events: none;
+            filter: blur(1px);
+        }
+        .btn-bubble.led-pulse::after {
+            animation: ledSweep 0.35s ease-out forwards;
+        }
+        @keyframes ledSweep {
+            0% { opacity: 0; transform: scaleX(0); filter: blur(3px); }
+            30% { opacity: 1; transform: scaleX(1); filter: blur(1px); box-shadow: 0 0 12px var(--accent), 0 0 24px var(--accent-glow); }
+            100% { opacity: 0; transform: scaleX(1.1); filter: blur(2px); }
+        }
+        /* Side glow ring */
+        .btn-bubble::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.15s;
+            pointer-events: none;
+        }
+        .btn-bubble.led-pulse::before {
+            animation: ringFade 0.35s ease-out forwards;
+        }
+        @keyframes ringFade {
+            0% { opacity: 0; }
+            25% { opacity: 0.4; box-shadow: 0 0 20px var(--accent-glow), 0 0 40px var(--accent-glow); }
+            100% { opacity: 0; }
+        }
+        .btn-bubble:hover {
+            background: rgba(255,255,255,0.88);
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-bubble:active {
+            transform: scale(0.94);
+            transition: all 0.08s ease;
+        }
+        .btn-op { background: rgba(255,243,224,0.8); color: #d97706; border-color: rgba(251,191,36,0.45); }
+        .btn-op:hover { background: rgba(255,243,224,0.95); border-color: rgba(251,191,36,0.7); }
+        .btn-eq { background: rgba(220,252,231,0.8); color: #059669; border-color: rgba(16,185,129,0.45); }
+        .btn-eq:hover { background: rgba(220,252,231,0.95); border-color: rgba(16,185,129,0.7); }
+        .btn-ac { background: rgba(254,226,226,0.8); color: #dc2626; border-color: rgba(239,68,68,0.45); }
+        .btn-ac:hover { background: rgba(254,226,226,0.95); border-color: rgba(239,68,68,0.7); }
+        .btn-func { background: rgba(238,242,255,0.8); color: #4f46e5; border-color: rgba(129,140,248,0.45); font-size: 1.05rem; }
+        .btn-func:hover { background: rgba(238,242,255,0.95); border-color: rgba(129,140,248,0.7); }
+
+        body.dark-mode .btn-bubble { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.13); color: #e2e8f0; }
+        body.dark-mode .btn-bubble:hover { background: rgba(255,255,255,0.16); }
+        body.dark-mode .btn-op { background: rgba(245,158,11,0.2); color: #fbbf24; }
+        body.dark-mode .btn-eq { background: rgba(16,185,129,0.2); color: #34d399; }
+        body.dark-mode .btn-ac { background: rgba(244,63,94,0.2); color: #fda4af; }
+        body.dark-mode .btn-func { background: rgba(99,102,241,0.18); color: #a5b4fc; }
+
+        /* ===== GLASS INPUT ===== */
+        .glass-input {
+            background: rgba(255,255,255,0.78);
+            border: 1.5px solid rgba(229,231,235,0.8);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02);
+            color: #1f2937;
+            transition: all 0.3s;
+            font-family: 'Tahoma', sans-serif;
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+        }
+        .glass-input:focus { background: rgba(255,255,255,0.95); border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-glow), inset 0 2px 4px rgba(0,0,0,0.02); }
+        body.dark-mode .glass-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.09); color: #f8fafc; }
+        body.dark-mode .glass-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 4px; background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+
+        /* ===== NAV PILLS ===== */
+        .nav-pill { position: relative; z-index: 10; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); border-radius: 9999px; white-space: nowrap; }
+        .nav-pill.active {
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,1);
+            color: #111;
+            font-weight: 700;
+        }
+        body.dark-mode .nav-pill.active { background: rgba(255,255,255,0.18); color: #fff; }
+
+        /* ===== RESULT GRID ===== */
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+        .result-item { display: flex; flex-direction: column; align-items: center; padding: 0.75rem; border-radius: 1rem; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.85); backdrop-filter: blur(15px); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        body.dark-mode .result-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09); }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 1.5rem);
+            max-width: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .top-left-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(255,255,255,0.98);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
+        }
+        .top-left-btn:hover { transform: scale(1.08); background: rgba(255,255,255,1); box-shadow: 0 6px 22px rgba(0,0,0,0.12); }
+        body.dark-mode .top-left-btn { background: rgba(20,25,48,0.85); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+        .hamburger-line { width: 18px; height: 2px; background: #333; border-radius: 2px; transition: all 0.3s; }
+        body.dark-mode .hamburger-line { background: #e2e8f0; }
+
+        .top-right-pill {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(255,255,255,0.98);
+            border-radius: 9999px;
+            padding: 6px 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,1);
+        }
+        body.dark-mode .top-right-pill { background: rgba(20,25,48,0.85); border: 1px solid rgba(255,255,255,0.1); }
+        .top-right-pill-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: #555; font-size: 1.1rem; }
+        .top-right-pill-btn:hover { background: rgba(0,0,0,0.06); transform: scale(1.1); }
+        body.dark-mode .top-right-pill-btn { color: #c0cee0; }
+        .top-right-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.1); margin: 0 2px; }
+        body.dark-mode .top-right-divider { background: rgba(255,255,255,0.1); }
+
+        /* Logo in top center */
+        .logo-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(25px);
+            border: 1.5px solid rgba(255,255,255,0.98);
+            border-radius: 9999px;
+            padding: 7px 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1);
+            cursor: default;
+            flex-shrink: 0;
+        }
+        body.dark-mode .logo-badge { background: rgba(20,25,48,0.85); border: 1px solid rgba(255,255,255,0.1); }
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .logo-text { font-size: 0.75rem; font-weight: 700; color: #333; letter-spacing: 0; }
+        body.dark-mode .logo-text { color: #e2e8f0; }
+
+        /* ===== SLIDE-IN DRAWER MENU ===== */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .drawer-overlay.open { opacity: 1; visibility: visible; }
+        .side-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(320px, 85vw);
+            height: 100%;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-left: 1.5px solid rgba(255,255,255,1);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+            z-index: 501;
+            transform: translateX(100%);
+            transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem 0 0 1.5rem;
+            overflow: hidden;
+        }
+        body.dark-mode .side-drawer { background: rgba(12,18,40,0.97); border-left: 1px solid rgba(255,255,255,0.07); }
+        .drawer-overlay.open .side-drawer { transform: translateX(0); }
+        .drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; }
+        body.dark-mode .drawer-header { border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .drawer-close { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; color: #555; transition: all 0.2s; }
+        .drawer-close:hover { background: rgba(239,68,68,0.12); color: #dc2626; transform: scale(1.1); }
+        body.dark-mode .drawer-close { background: rgba(255,255,255,0.08); color: #ccc; }
+        .drawer-items { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .drawer-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 1rem;
+            cursor: pointer;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        .drawer-item:hover { background: rgba(var(--accent-rgb,99,102,241),0.08); transform: translateX(-4px); }
+        .drawer-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        body.dark-mode .drawer-item { color: #e2e8f0; }
+        body.dark-mode .drawer-item:hover { background: rgba(255,255,255,0.07); }
+
+        /* Bottom action bar inside drawer */
+        .drawer-action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 16px;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        body.dark-mode .drawer-action-bar { background: rgba(255,255,255,0.04); border-top: 1px solid rgba(255,255,255,0.06); }
+        .drawer-action-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 14px; cursor: pointer; transition: all 0.2s; color: #555; font-size: 0.7rem; font-weight: 600; }
+        .drawer-action-item:hover { background: rgba(0,0,0,0.06); transform: translateY(-2px); }
+        .drawer-action-item .da-icon { font-size: 1.3rem; }
+        body.dark-mode .drawer-action-item { color: #b0bec5; }
+
+        /* ===== MODAL OVERLAY & CONTENT ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.18); backdrop-filter: blur(6px); z-index: 300; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-content { width: 92%; max-width: 420px; max-height: 85vh; overflow-y: auto; transform: scale(0.9) translateY(20px); transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 2rem; }
+        .modal-overlay.open .modal-content { transform: scale(1) translateY(0); }
+
+        /* ===== FULLSCREEN PANEL ===== */
+        .fullscreen-panel {
+            position: fixed;
+            inset: 0;
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease;
+            border-radius: 0;
+        }
+        .fullscreen-panel.open { opacity: 1; visibility: visible; }
+        .fullscreen-back-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.4rem;
+            color: #fff;
+            z-index: 10;
+            transition: all 0.25s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .fullscreen-back-btn:hover { background: rgba(255,255,255,0.28); transform: scale(1.1); }
+
+        /* ===== TOAST ===== */
+        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(120px); background: rgba(15,20,40,0.92); backdrop-filter: blur(12px); color: white; padding: 12px 24px; border-radius: 30px; z-index: 9999; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.3); font-weight: 600; font-size: 0.9rem; white-space: nowrap; opacity: 0; pointer-events: none; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ===== LOADING SPINNER ===== */
+        #loading-spinner { position: fixed; inset: 0; background: #fff; z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; transition: opacity 0.5s ease; }
+        body.dark-mode #loading-spinner { background: #0a0f1e; }
+        .spinner-ring { width: 64px; height: 64px; border: 5px solid rgba(0,0,0,0.08); border-top: 5px solid var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== LANGUAGE SELECT OVERLAY ===== */
+        #lang-select-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #f0f4ff, #fafbff, #f5f0ff);
+            z-index: 15000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 36px;
+            transition: opacity 0.8s ease;
+        }
+        body.dark-mode #lang-select-overlay { background: linear-gradient(-45deg, #0a0f1e, #141928, #0d1117); }
+        .lang-btn {
+            min-width: 200px;
+            padding: 18px 36px;
+            border-radius: 9999px;
+            border: 1.5px solid rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Vazirmatn', sans-serif;
+            color: #1a1a2e;
+            text-align: center;
+        }
+        .lang-btn:hover { transform: scale(1.06) translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.14), 0 0 0 3px var(--accent-glow); }
+        .lang-btn.fa { background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12)); border-color: rgba(99,102,241,0.4); }
+        .lang-btn.en { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1)); border-color: rgba(16,185,129,0.4); }
+
+        /* ===== INTRO OVERLAY ===== */
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 40%, #f5f0ff 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            padding: 30px;
+            transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        body.dark-mode #intro-overlay { background: linear-gradient(-45deg, #0a0f1e, #141928, #0d1117); }
+        #intro-overlay.active { opacity: 1; pointer-events: auto; }
+        /* Animated blobs */
+        .intro-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: blobMove 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes blobMove {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.92); }
+        }
+        .intro-logo-container {
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .intro-logo-container.show { opacity: 1; transform: translateY(0) scale(1); }
+        .intro-glass-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 100%);
+            backdrop-filter: blur(30px);
+            border: 2px solid rgba(255,255,255,0.95);
+            box-shadow: 0 20px 60px rgba(99,102,241,0.2), 0 4px 16px rgba(0,0,0,0.08), inset 0 2px 0 rgba(255,255,255,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 12px;
+            animation: logoPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 20px 60px rgba(99,102,241,0.2), 0 4px 16px rgba(0,0,0,0.08); }
+            50% { box-shadow: 0 20px 80px rgba(99,102,241,0.35), 0 4px 20px rgba(0,0,0,0.1), 0 0 40px rgba(139,92,246,0.2); }
+        }
+        .intro-text {
+            font-size: clamp(2.2rem, 10vw, 4rem);
+            font-weight: 800;
+            color: #1a1a2e;
+            letter-spacing: -1px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            text-align: center;
+        }
+        body.dark-mode .intro-text { color: #f0f4ff; }
+        .intro-text.show { opacity: 1; transform: translateY(0); }
+        .intro-sub-text {
+            font-size: clamp(0.95rem, 3.5vw, 1.3rem);
+            font-weight: 500;
+            color: #6b7280;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            text-align: center;
+            max-width: 90%;
+        }
+        body.dark-mode .intro-sub-text { color: #9ca3af; }
+        .intro-sub-text.show { opacity: 1; transform: translateY(0); }
+        .intro-special-msg {
+            font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            padding: 0 20px;
+            line-height: 1.8;
+            max-width: 90%;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        body.dark-mode .intro-special-msg { color: #e2e8f0; }
+        .intro-special-msg.show { opacity: 1; transform: translateY(0); }
+
+        /* ===== APP CONTAINER ===== */
+        .app-container { opacity: 0; transition: opacity 0.9s ease-in; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .app-visible { opacity: 1; }
+
+        /* ===== USER BADGE ===== */
+        #user-name-badge { position: absolute; top: 5px; right: 15px; font-size: 0.82rem; font-weight: 700; color: #4b5563; padding: 6px 14px; border-radius: 9999px; background: rgba(255,255,255,0.88); border: 1.5px solid rgba(255,255,255,0.98); backdrop-filter: blur(15px); z-index: 50; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        body.dark-mode #user-name-badge { color: #e2e8f0; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* ===== BOTTOM NAVIGATION ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 1.5rem);
+            max-width: 500px;
+            z-index: 100;
+        }
+        .bottom-nav-inner {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(25px);
+            border: 1.5px solid rgba(255,255,255,0.98);
+            border-radius: 9999px;
+            padding: 6px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            gap: 3px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .bottom-nav-inner::-webkit-scrollbar { display: none; }
+        body.dark-mode .bottom-nav-inner { background: rgba(12,18,40,0.92); border: 1px solid rgba(255,255,255,0.08); }
+
+        /* ===== NOTEPAD / WHITEBOARD ===== */
+        #notepad-panel {
+            background: #fff;
+        }
+        body.dark-mode #notepad-panel { background: #111827; }
+        .notepad-toolbar {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.07);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        body.dark-mode .notepad-toolbar { background: rgba(20,25,48,0.95); border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .notepad-canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; display: block; }
+        .np-color-btn { width: 32px; height: 32px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+        .np-color-btn.active, .np-color-btn:hover { transform: scale(1.2); border-color: rgba(0,0,0,0.25); border-width: 3px; }
+        .np-tool-btn { padding: 7px 14px; background: rgba(0,0,0,0.06); border: 1.5px solid transparent; color: #444; font-weight: bold; font-size: 0.82rem; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: 'Vazirmatn', sans-serif; white-space: nowrap; }
+        .np-tool-btn:hover { background: rgba(0,0,0,0.1); transform: scale(1.04); }
+        .np-tool-btn.active-tool { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 10px var(--accent-glow); }
+        body.dark-mode .np-tool-btn { background: rgba(255,255,255,0.08); color: #ccc; }
+        body.dark-mode .np-tool-btn.active-tool { background: var(--accent); color: #fff; }
+
+        /* ===== SETTINGS FULLSCREEN ===== */
+        #settings-panel {
+            background: linear-gradient(135deg, #f0f4ff, #fafbff);
+            overflow-y: auto;
+        }
+        body.dark-mode #settings-panel { background: linear-gradient(-45deg, #0a0f1e, #141928); }
+        .settings-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 16px; }
+        .settings-section { margin: 0 16px 16px; }
+        .settings-card { background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.98); border-radius: 1.5rem; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 14px; }
+        body.dark-mode .settings-card { background: rgba(20,25,48,0.7); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; border-radius: 8px; padding-inline: 4px; }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row:hover { background: rgba(0,0,0,0.03); }
+        body.dark-mode .settings-row { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        body.dark-mode .settings-row:hover { background: rgba(255,255,255,0.03); }
+        .toggle-switch { position: relative; width: 46px; height: 24px; border-radius: 12px; background: #d1d5db; transition: background 0.3s; flex-shrink: 0; }
+        .toggle-switch.on { background: var(--accent); }
+        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .toggle-switch.on::after { transform: translateX(22px); }
+        .theme-color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: all 0.25s; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        .theme-color-dot:hover { transform: scale(1.15); }
+        .theme-color-dot.selected { border-color: #fff; box-shadow: 0 0 0 3px var(--accent), 0 2px 8px rgba(0,0,0,0.2); transform: scale(1.1); }
+
+        /* ===== POWER/FACTORIZE STYLES ===== */
+        .power-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; margin: 4px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.28); border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: #4f46e5; transition: all 0.3s; }
+        body.dark-mode .power-badge { background: rgba(99,102,241,0.22); border-color: rgba(99,102,241,0.38); color: #818cf8; }
+        .power-input { width: 48px; height: 26px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(255,255,255,0.85); text-align: center; font-weight: bold; color: #4f46e5; }
+        .power-input:focus { outline: none; border-color: rgba(99,102,241,0.6); box-shadow: 0 0 8px rgba(99,102,241,0.3); }
+        body.dark-mode .power-input { background: rgba(0,0,0,0.3); border-color: rgba(99,102,241,0.38); color: #818cf8; }
+        .remove-power-btn { background: rgba(220,38,38,0.18); color: #dc2626; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.75rem; transition: all 0.2s; font-weight: bold; }
+        .remove-power-btn:hover { background: rgba(220,38,38,0.35); transform: scale(1.1); }
+        .variable-tag { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; margin: 4px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.28); border-radius: 20px; font-size: 0.88rem; font-weight: 600; color: #059669; }
+        body.dark-mode .variable-tag { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.32); color: #34d399; }
+        .remove-var-btn { background: rgba(220,38,38,0.18); color: #dc2626; border: none; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem; transition: all 0.2s; }
+        .remove-var-btn:hover { background: rgba(220,38,38,0.35); transform: scale(1.1); }
+        .add-variable-btn { background: rgba(59,130,246,0.12); border: 2px dashed rgba(59,130,246,0.38); color: #2563eb; padding: 7px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .add-variable-btn:hover { background: rgba(59,130,246,0.22); border-color: rgba(59,130,246,0.6); transform: scale(1.04); }
+        body.dark-mode .add-variable-btn { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.32); color: #60a5fa; }
+        .factorization-display { font-family: 'Tahoma', monospace; direction: ltr; text-align: center; padding: 1rem; background: rgba(99,102,241,0.06); border: 2px solid rgba(99,102,241,0.18); border-radius: 1rem; font-size: 1.18rem; font-weight: bold; color: #4f46e5; }
+        body.dark-mode .factorization-display { background: rgba(99,102,241,0.14); border-color: rgba(99,102,241,0.28); color: #818cf8; }
+
+        /* ===== QUESTION/SUPPORT STYLES ===== */
+        .question-item { background: rgba(255,255,255,0.65); border: 1.5px solid rgba(255,255,255,0.85); border-radius: 1rem; padding: 14px; margin-bottom: 10px; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .question-item:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .question-item.answered { background: rgba(220,252,231,0.55); border-color: rgba(34,197,94,0.38); }
+        .question-item.pending { background: rgba(254,243,199,0.55); border-color: rgba(251,191,36,0.38); }
+        body.dark-mode .question-item { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+
+        /* ===== CURRENCY CONVERTER ===== */
+        .currency-flag { font-size: 1.5rem; }
+
+        /* ===== GEOMETRY ===== */
+        .shape-btn { background: rgba(255,255,255,0.65); border: 1.5px solid rgba(255,255,255,0.85); border-radius: 1rem; padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.88rem; transition: all 0.25s; }
+        .shape-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 16px var(--accent-glow); }
+        .shape-btn:hover:not(.active) { background: rgba(255,255,255,0.85); transform: translateY(-1px); }
+        body.dark-mode .shape-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #e2e8f0; }
+        body.dark-mode .shape-btn.active { color: #fff; }
+
+        /* ===== CHAT STYLES ===== */
+        .chat-container { max-height: 280px; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 14px; margin-bottom: 14px; }
+        .chat-message { padding: 10px 14px; margin: 7px 0; border-radius: 12px; max-width: 85%; font-size: 0.88rem; }
+        .chat-message.user { background: rgba(59,130,246,0.16); margin-left: auto; text-align: right; }
+        .chat-message.admin { background: rgba(34,197,94,0.16); margin-right: auto; }
+
+        /* ===== DESKTOP RESPONSIVE ===== */
+        @media (min-width: 768px) {
+            body { padding-top: 90px; padding-bottom: 120px; }
+            main { max-width: 520px !important; }
+            .bottom-nav { max-width: 520px; }
+        }
+        @media (min-width: 1024px) {
+            body { padding-top: 100px; }
+            main { max-width: 560px !important; }
+        }
+
+        /* ===== TRANSITIONS & ANIMATIONS ===== */
+        @keyframes fadeInSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+        .animate-in { animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* smooth transitions everywhere */
+        * { scroll-behavior: smooth; }
+        .app-content-fade { transition: opacity 0.18s ease; }
+    </style>
+</head>
+<body class="theme-blue selection:bg-indigo-200 selection:text-indigo-900 transition-colors duration-500">
+
+<!-- ===== LOADING SPINNER ===== -->
+<div id="loading-spinner">
+    <div class="spinner-ring"></div>
+    <p style="color:#9ca3af;font-size:0.85rem;font-weight:600;font-family:'Vazirmatn',sans-serif;">در حال بارگذاری...</p>
+</div>
+
+<!-- ===== LANGUAGE SELECT OVERLAY ===== -->
+<div id="lang-select-overlay">
+    <div style="text-align:center;opacity:0;transform:translateY(30px);transition:all 1s cubic-bezier(0.22,1,0.36,1);" id="lang-select-inner">
+        <div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.6));backdrop-filter:blur(30px);border:2px solid rgba(255,255,255,0.95);box-shadow:0 20px 60px rgba(99,102,241,0.18);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 20px;border-radius:24px;">🧮</div>
+        <h1 style="font-family:'Vazirmatn',sans-serif;font-size:2rem;font-weight:800;color:#1a1a2e;margin-bottom:8px;">Pro Calculator</h1>
+        <p style="font-family:'Vazirmatn',sans-serif;font-size:0.95rem;color:#6b7280;margin-bottom:40px;" id="lang-sub">زبان خود را انتخاب کنید / Select your language</p>
+        <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
+            <button class="lang-btn fa" onclick="selectLanguage('fa')">🇮🇷 فارسی</button>
+            <button class="lang-btn en" onclick="selectLanguage('en')">🇺🇸 English</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== INTRO OVERLAY ===== -->
+<div id="intro-overlay">
+    <div class="intro-blob" style="width:300px;height:300px;background:rgba(99,102,241,0.15);top:-80px;right:-80px;animation-delay:0s;"></div>
+    <div class="intro-blob" style="width:250px;height:250px;background:rgba(139,92,246,0.12);bottom:-60px;left:-60px;animation-delay:2s;"></div>
+    <div class="intro-blob" style="width:200px;height:200px;background:rgba(16,185,129,0.1);top:40%;right:10%;animation-delay:4s;"></div>
+    
+    <div class="intro-logo-container" id="intro-logo">
+        <div class="intro-glass-logo">🧮</div>
+    </div>
+    <div class="intro-text" id="intro-hello"></div>
+    <div class="intro-sub-text" id="intro-sub"></div>
+    <div class="intro-special-msg" id="intro-special-msg"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast">متن پیام</div>
+
+<!-- ===== TOP BAR ===== -->
+<div class="top-bar" id="main-top-bar" style="display:none;">
+    <button class="top-left-btn" onclick="openDrawer()" aria-label="Menu">
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line" style="width:12px;"></div>
+            <div class="hamburger-line"></div>
+        </div>
+    </button>
+
+    <div class="logo-badge">
+        <div class="logo-icon">🧮</div>
+        <span class="logo-text">Pro Calculator</span>
+    </div>
+
+    <div class="top-right-pill">
+        <div class="top-right-pill-btn" onclick="openSearch()" title="جستجو">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="top-right-divider"></div>
+        <div class="top-right-pill-btn" onclick="openDrawer()" title="بیشتر">
+            <svg width="4" height="18" viewBox="0 0 4 18" fill="currentColor"><circle cx="2" cy="2" r="2"/><circle cx="2" cy="9" r="2"/><circle cx="2" cy="16" r="2"/></svg>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DRAWER OVERLAY ===== -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()">
+    <div class="side-drawer" onclick="event.stopPropagation()">
+        <div class="drawer-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px var(--accent-glow);">🧮</div>
+                <div>
+                    <div style="font-weight:800;font-size:1rem;color:#1a1a2e;" id="drawer-title" class="dark:text-white">Pro Calculator</div>
+                    <div id="drawer-user" style="font-size:0.78rem;color:#6b7280;font-weight:500;"></div>
+                </div>
+            </div>
+            <div class="drawer-close" onclick="closeDrawer()">✕</div>
+        </div>
+        <div class="drawer-items" id="drawer-items">
+            <!-- Items injected by JS -->
+        </div>
+        <div class="drawer-action-bar" id="drawer-action-bar">
+            <!-- Action items injected by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- ===== SETTINGS FULLSCREEN PANEL ===== -->
+<div class="fullscreen-panel" id="settings-panel">
+    <div class="fullscreen-back-btn" onclick="closeFullscreen('settings-panel')">←</div>
+    <div style="padding:24px 20px 20px;padding-top:72px;flex:1;overflow-y:auto;" id="settings-panel-content">
+        <!-- Settings rendered by JS -->
+    </div>
+</div>
+
+<!-- ===== NOTEPAD FULLSCREEN PANEL ===== -->
+<div class="fullscreen-panel" id="notepad-panel">
+    <div class="fullscreen-back-btn" style="right:auto;left:16px;" onclick="closeNotepad()">→</div>
+    <div id="notepad-title-bar" style="display:flex;align-items:center;justify-content:center;padding:16px;padding-top:72px;">
+        <span id="notepad-title-text" style="font-size:1.1rem;font-weight:700;color:#fff;"></span>
+    </div>
+    <div class="notepad-toolbar" id="notepad-toolbar">
+        <!-- Colors & tools injected by JS -->
+    </div>
+    <div style="flex:1;position:relative;overflow:hidden;">
+        <canvas id="notepad-canvas" class="notepad-canvas"></canvas>
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<!-- History -->
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-content glass-panel p-6 flex flex-col relative">
+        <button onclick="closeModal('history-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white" id="modal-history-title">تاریخچه</h2>
+        <p class="text-center text-xs text-gray-500 mb-2" id="modal-history-tap">برای کپی روی نتیجه کلیک کنید</p>
+        <div id="history-list" class="flex flex-col gap-2 overflow-y-auto max-h-96 pr-1">
+            <div class="text-center text-gray-500 py-4" id="no-history-text">هنوز محاسبه‌ای انجام نشده</div>
+        </div>
+        <button onclick="clearHistory()" class="btn-bubble mt-4 py-2 rounded-2xl text-red-700 text-sm font-semibold" id="clear-history-btn">پاک کردن تاریخچه</button>
+    </div>
+</div>
+
+
+<!-- Power & Convert -->
+<div id="power-convert-modal" class="modal-overlay">
+    <div class="modal-content glass-panel p-6 flex flex-col relative">
+        <button onclick="closeModal('power-convert-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white" id="modal-pc-title">توان و تبدیل</h2>
+        <div class="glass-panel p-1.5 rounded-full flex gap-1 mb-4">
+            <button onclick="setPowerConvertMode('power')" id="btn-pc-power" class="flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all">توان</button>
+            <button onclick="setPowerConvertMode('convert')" id="btn-pc-convert" class="flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all">تبدیل واحد</button>
+        </div>
+        <div id="power-convert-content"></div>
+    </div>
+</div>
+
+<!-- BMI -->
+<div id="bmi-modal" class="modal-overlay">
+    <div class="modal-content glass-panel p-6 flex flex-col relative">
+        <button onclick="closeModal('bmi-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white" id="modal-bmi-title">شاخص توده بدنی (BMI)</h2>
+        <div class="flex flex-col gap-4">
+            <input type="number" id="bmi-height" class="glass-input w-full h-12 rounded-xl text-center text-lg font-mono" placeholder="قد (سانتی‌متر)">
+            <input type="number" id="bmi-weight" class="glass-input w-full h-12 rounded-xl text-center text-lg font-mono" placeholder="وزن (کیلوگرم)">
+            <button onclick="calcBMI()" class="btn-bubble btn-eq h-12 rounded-xl text-lg font-semibold shadow-lg" id="btn-bmi-calc">محاسبه BMI</button>
+            <div id="bmi-result" class="glass-panel rounded-xl p-4 mt-2 text-center text-gray-800 dark:text-white">---</div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Support -->
+<div id="admin-support-modal" class="modal-overlay">
+    <div class="modal-content glass-panel rounded-3xl p-6 flex flex-col relative">
+        <button onclick="closeModal('admin-support-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white">سوالات پشتیبانی</h2>
+        <div id="admin-questions-list" class="flex flex-col gap-3 overflow-y-auto max-h-96">
+            <p class="text-center text-gray-500">در حال بارگذاری...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Answer Modal -->
+<div id="answer-modal" class="modal-overlay">
+    <div class="modal-content glass-panel rounded-3xl p-6 flex flex-col relative">
+        <button onclick="closeModal('answer-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white">پاسخ به سوال</h2>
+        <div class="flex flex-col gap-4">
+            <div class="glass-panel p-4 rounded-xl">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">سوال کاربر:</p>
+                <p id="question-text" class="font-bold text-gray-800 dark:text-white"></p>
+                <p class="text-xs text-gray-500 mt-2" id="question-user"></p>
+            </div>
+            <textarea id="answer-text" class="glass-input w-full h-32 rounded-xl text-right p-4 resize-none" placeholder="پاسخ خود را بنویسید..."></textarea>
+            <button onclick="submitAnswer()" class="btn-bubble btn-eq w-full h-12 rounded-xl text-lg font-semibold shadow-lg">ارسال پاسخ</button>
+        </div>
+    </div>
+</div>
+
+<!-- User Support -->
+<div id="user-support-modal" class="modal-overlay">
+    <div class="modal-content glass-panel rounded-3xl p-6 flex flex-col relative">
+        <button onclick="closeModal('user-support-modal')" class="absolute top-4 left-4 text-gray-600 hover:text-red-500 font-bold text-xl transition-colors">✕</button>
+        <h2 class="text-xl font-bold text-center mb-4 text-gray-800 dark:text-white" id="modal-support-title">ارتباط با پشتیبانی</h2>
+        <div class="flex flex-col gap-4">
+            <textarea id="support-question" class="glass-input w-full h-32 rounded-xl text-right p-4 resize-none" placeholder="سوال خود را بنویسید..."></textarea>
+            <button onclick="submitSupportQuestion()" class="btn-bubble btn-eq w-full h-12 rounded-xl text-lg font-semibold shadow-lg" id="btn-send-support">ارسال سوال</button>
+            <div class="glass-panel rounded-xl p-4 mt-2">
+                <h3 class="font-bold text-sm mb-3 text-gray-700 dark:text-gray-200 border-b border-gray-300/30 pb-2" id="support-questions-title">سوالات شما:</h3>
+                <div id="user-questions-list" class="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                    <p class="text-xs text-gray-500 text-center py-2">سوالی ثبت نشده است</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app-container" class="app-container">
+    <main class="w-full max-w-md px-4 pb-4">
+        <div class="glass-panel rounded-[2.5rem] p-5 relative overflow-hidden min-h-[520px] flex flex-col shadow-xl">
+            <div id="app-content" class="flex-1 flex flex-col relative app-content-fade"></div>
+        </div>
+    </main>
+
+    <!-- ===== BOTTOM NAVIGATION ===== -->
+    <div class="bottom-nav">
+        <div class="bottom-nav-inner" id="bottom-nav-inner">
+            <!-- Pills injected by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+// =============================================
+// GLOBALS & STATE
+// =============================================
+let currentTab = 'basic';
+let displayVal = '0';
+let calcHistory = [];
+let isDarkMode = false;
+let currentLang = 'fa'; // 'fa' or 'en'
+let currentTheme = 'blue';
+let syncDarkWithSystem = false;
+let userData = { firstName: '', lastName: '' };
+let currentQuestionId = null;
+let factorizeSubTab = 'algebraic';
+let variablePowers = {};
+let calcMode = 'age';
+let powerConvertMode = 'power';
+let currentGeomShape = 'square';
+let currentCurrencyFrom = 'USD';
+let currentCurrencyTo = 'IRR';
+let currencyRates = {};
+let currencyLoaded = false;
+
+// Notepad
+let npCanvas, npCtx, npIsDrawing = false, npColor = '#000000', npBrushSize = 4;
+let npLastX = 0, npLastY = 0, npIsEraser = false, npCurrentTool = 'pen';
+let npHistory = [];
+
+// Metal densities
+const metalDensities = { gold:19.32,silver:10.49,copper:8.96,aluminum:2.70,iron:7.87,platinum:21.45,titanium:4.51,zinc:7.14,nickel:8.91,tin:7.31,lead:11.34,brass:8.53,bronze:8.80,stainless:7.93,magnesium:1.74,tungsten:19.25,cobalt:8.90,chromium:7.19 };
+const metalNames = { gold:'طلا',silver:'نقره',copper:'مس',aluminum:'آلومینیوم',iron:'آهن',platinum:'پلاتین',titanium:'تیتانیوم',zinc:'روی',nickel:'نیکل',tin:'قلع',lead:'سرب',brass:'برنج',bronze:'برنز',stainless:'استیل',magnesium:'منیزیم',tungsten:'تنگستن',cobalt:'کبالت',chromium:'کروم' };
+const metalNamesEn = { gold:'Gold',silver:'Silver',copper:'Copper',aluminum:'Aluminum',iron:'Iron',platinum:'Platinum',titanium:'Titanium',zinc:'Zinc',nickel:'Nickel',tin:'Tin',lead:'Lead',brass:'Brass',bronze:'Bronze',stainless:'Steel',magnesium:'Magnesium',tungsten:'Tungsten',cobalt:'Cobalt',chromium:'Chromium' };
+
+// =============================================
+// i18n TRANSLATIONS
+// =============================================
+const T = {
+    fa: {
+        tabs: ['پایه','فیثاغورس','تجزیه','معادله','خواص','غربالگری','فلزات','هندسه','ارز'],
+        tabKeys: ['basic','pythagoras','factorize','equation','properties','sieve','metals','geometry','currency'],
+        drawerItems: [
+            {icon:'⚙️', bg:'rgba(99,102,241,0.12)', label:'تنظیمات', fn:'openSettingsPanel()'},
+            {icon:'📜', bg:'rgba(251,191,36,0.12)', label:'تاریخچه', fn:"openModal('history-modal');closeDrawer()"},
+            {icon:'⚡', bg:'rgba(245,158,11,0.12)', label:'توان و تبدیل', fn:'openPowerConvert()'},
+            {icon:'💪', bg:'rgba(239,68,68,0.12)', label:'شاخص BMI', fn:"openModal('bmi-modal');closeDrawer()"},
+            {icon:'📝', bg:'rgba(59,130,246,0.12)', label:'نوت پد', fn:'openNotepad()'},
+        ],
+        drawerActions: [
+            {icon:'📋', label:'کپی', fn:'openHistory()'},
+            {icon:'🗂️', label:'تاریخچه', fn:"openModal('history-modal');closeDrawer()"},
+            {icon:'⚙️', label:'تنظیمات', fn:'openSettingsPanel()'},
+        ],
+        settings: 'تنظیمات', darkMode: 'حالت شب', syncSystem: 'هماهنگی با سیستم', colorTheme: 'تم رنگی', language: 'زبان', user: 'کاربر', credits: 'اعتبارات', support: 'پشتیبانی',
+        history: 'تاریخچه محاسبات', noHistory: 'هنوز محاسبه‌ای انجام نشده', clearHistory: 'پاک کردن',
+        hello: 'سلام', welcome: 'خوش آمدید به Pro Calculator', introPro: 'ماشین حساب حرفه‌ای',
+        langName: 'فارسی',
+        currencyUpdateBtn: 'به‌روزرسانی نرخ',
+        currencyLoading: 'در حال دریافت نرخ...',
+        currencyError: 'خطا در دریافت نرخ',
+        geomShapes: ['مربع','مستطیل','دایره','مثلث','ذوزنقه'],
+        geomCalc: 'محاسبه',
+        geomArea: 'مساحت', geomPerimeter: 'محیط',
+        notepadTitle: 'نوت پد', 
+        noCalc: 'هنوز محاسبه‌ای انجام نشده',
+    },
+    en: {
+        tabs: ['Basic','Pythagoras','Factorize','Equation','Properties','Sieve','Metals','Geometry','Currency'],
+        tabKeys: ['basic','pythagoras','factorize','equation','properties','sieve','metals','geometry','currency'],
+        drawerItems: [
+            {icon:'⚙️', bg:'rgba(99,102,241,0.12)', label:'Settings', fn:'openSettingsPanel()'},
+            {icon:'📜', bg:'rgba(251,191,36,0.12)', label:'History', fn:"openModal('history-modal');closeDrawer()"},
+            {icon:'⚡', bg:'rgba(245,158,11,0.12)', label:'Power & Convert', fn:'openPowerConvert()'},
+            {icon:'💪', bg:'rgba(239,68,68,0.12)', label:'BMI Index', fn:"openModal('bmi-modal');closeDrawer()"},
+            {icon:'📝', bg:'rgba(59,130,246,0.12)', label:'Notepad', fn:'openNotepad()'},
+        ],
+        drawerActions: [
+            {icon:'📋', label:'Copy', fn:'openHistory()'},
+            {icon:'🗂️', label:'History', fn:"openModal('history-modal');closeDrawer()"},
+            {icon:'⚙️', label:'Settings', fn:'openSettingsPanel()'},
+        ],
+        settings: 'Settings', darkMode: 'Dark Mode', syncSystem: 'Sync with System', colorTheme: 'Color Theme', language: 'Language', user: 'User', credits: 'Credits', support: 'Support',
+        history: 'Calculation History', noHistory: 'No calculations yet', clearHistory: 'Clear',
+        hello: 'Hello', welcome: 'Welcome to Pro Calculator', introPro: 'Professional Calculator',
+        langName: 'English',
+        currencyUpdateBtn: 'Update Rates',
+        currencyLoading: 'Fetching rates...',
+        currencyError: 'Error fetching rates',
+        geomShapes: ['Square','Rectangle','Circle','Triangle','Trapezoid'],
+        geomCalc: 'Calculate',
+        geomArea: 'Area', geomPerimeter: 'Perimeter',
+        notepadTitle: 'Notepad',
+        noCalc: 'No calculations yet',
+    }
+};
+function t(key) { return (T[currentLang] || T.fa)[key] || key; }
+
+// =============================================
+// AUDIO
+// =============================================
+let audioCtx = null;
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function playClick(type = 'default') {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (type === 'eq') {
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.18, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+            osc.type = 'sine';
+            osc.start(); osc.stop(ctx.currentTime + 0.2);
+        } else if (type === 'ac') {
+            osc.frequency.setValueAtTime(280, ctx.currentTime);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.type = 'square';
+            osc.start(); osc.stop(ctx.currentTime + 0.15);
+        } else if (type === 'op') {
+            osc.frequency.setValueAtTime(660, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.type = 'triangle';
+            osc.start(); osc.stop(ctx.currentTime + 0.12);
+        } else {
+            osc.frequency.setValueAtTime(780, ctx.currentTime);
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+            osc.type = 'sine';
+            osc.start(); osc.stop(ctx.currentTime + 0.1);
+        }
+    } catch(e) {}
+}
+
+// LED pulse effect
+function ledBtn(btn) {
+    if (!btn) return;
+    btn.classList.remove('led-pulse');
+    void btn.offsetWidth;
+    btn.classList.add('led-pulse');
+    setTimeout(() => btn.classList.remove('led-pulse'), 400);
+}
+
+// =============================================
+// INITIALIZATION
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Load saved preferences
+    const savedLang = localStorage.getItem('pc_lang');
+    const savedTheme = localStorage.getItem('pc_theme') || 'blue';
+    const savedDark = localStorage.getItem('pc_dark') === 'true';
+    const savedSync = localStorage.getItem('pc_sync_dark') === 'true';
+
+    applyTheme(savedTheme);
+    syncDarkWithSystem = savedSync;
+
+    if (savedSync) {
+        isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } else {
+        isDarkMode = savedDark;
+    }
+    if (isDarkMode) document.body.classList.add('dark-mode');
+
+    setTimeout(() => {
+        document.getElementById('loading-spinner').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('loading-spinner').style.display = 'none';
+            if (savedLang) {
+                currentLang = savedLang;
+                document.documentElement.lang = currentLang;
+                if (currentLang === 'en') { document.documentElement.dir = 'ltr'; } else { document.documentElement.dir = 'rtl'; }
+                checkUserAndStart();
+            } else {
+                showLangSelect();
+            }
+        }, 300);
+    }, 600);
+
+    initNotepad();
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (syncDarkWithSystem) {
+            isDarkMode = e.matches;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+        }
+    });
+});
+
+// =============================================
+// LANGUAGE SELECTION
+// =============================================
+function showLangSelect() {
+    const overlay = document.getElementById('lang-select-overlay');
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        const inner = document.getElementById('lang-select-inner');
+        inner.style.opacity = '1';
+        inner.style.transform = 'translateY(0)';
+    }, 100);
+}
+
+function selectLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('pc_lang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+    const overlay = document.getElementById('lang-select-overlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        checkUserAndStart();
+    }, 700);
+}
+
+// =============================================
+// THEME
+// =============================================
+function applyTheme(theme) {
+    const themes = ['blue','purple','green','red','orange'];
+    themes.forEach(t => document.body.classList.remove('theme-' + t));
+    document.body.classList.add('theme-' + theme);
+    currentTheme = theme;
+    localStorage.setItem('pc_theme', theme);
+}
+
+// =============================================
+// USER AUTH & INTRO
+// =============================================
+function checkUserAndStart() {
+    const savedFName = localStorage.getItem('ah_user_fname');
+    const savedLName = localStorage.getItem('ah_user_lname');
+    if (savedFName && savedLName) {
+        userData.firstName = savedFName;
+        userData.lastName = savedLName;
+        startIntroSequence();
+    } else {
+        showLoginScreen();
+    }
+}
+
+function showLoginScreen() {
+    const loginHTML = currentLang === 'fa' ? `
+        <div style="position:fixed;inset:0;background:linear-gradient(135deg,#f0f4ff,#fafbff,#f5f0ff);z-index:14000;display:flex;justify-content:center;align-items:center;padding:20px;" id="login-overlay">
+            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col gap-5 w-full max-w-sm text-center border-2 shadow-2xl animate-in">
+                <div style="font-size:3rem;margin-bottom:4px;">👋</div>
+                <h2 style="font-size:1.5rem;font-weight:800;color:#1a1a2e;">خوش آمدید</h2>
+                <p style="font-size:0.88rem;color:#6b7280;">برای شروع، نام خود را وارد کنید</p>
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="login-fname" class="glass-input w-full h-12 rounded-2xl text-center text-lg" placeholder="نام">
+                    <input type="text" id="login-lname" class="glass-input w-full h-12 rounded-2xl text-center text-lg" placeholder="نام خانوادگی">
+                </div>
+                <button onclick="submitLogin()" class="btn-bubble w-full h-12 rounded-2xl font-bold text-lg mt-2 shadow-lg" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);color:#4f46e5;">ورود →</button>
+            </div>
+        </div>
+    ` : `
+        <div style="position:fixed;inset:0;background:linear-gradient(135deg,#f0f4ff,#fafbff,#f5f0ff);z-index:14000;display:flex;justify-content:center;align-items:center;padding:20px;" id="login-overlay" dir="ltr">
+            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col gap-5 w-full max-w-sm text-center border-2 shadow-2xl animate-in">
+                <div style="font-size:3rem;margin-bottom:4px;">👋</div>
+                <h2 style="font-size:1.5rem;font-weight:800;color:#1a1a2e;">Welcome</h2>
+                <p style="font-size:0.88rem;color:#6b7280;">Enter your name to get started</p>
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="login-fname" class="glass-input w-full h-12 rounded-2xl text-center text-lg" placeholder="First Name">
+                    <input type="text" id="login-lname" class="glass-input w-full h-12 rounded-2xl text-center text-lg" placeholder="Last Name">
+                </div>
+                <button onclick="submitLogin()" class="btn-bubble w-full h-12 rounded-2xl font-bold text-lg mt-2 shadow-lg" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);color:#4f46e5;">Enter →</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', loginHTML);
+    setTimeout(() => {
+        const inp = document.getElementById('login-fname');
+        if (inp) inp.focus();
+        document.getElementById('login-lname').addEventListener('keydown', e => { if (e.key === 'Enter') submitLogin(); });
+    }, 100);
+}
+
+function submitLogin() {
+    const fName = (document.getElementById('login-fname')?.value || '').trim();
+    const lName = (document.getElementById('login-lname')?.value || '').trim();
+    if (!fName || !lName) { showToast(currentLang === 'fa' ? 'لطفاً نام و نام خانوادگی را وارد کنید' : 'Please enter your name'); return; }
+    localStorage.setItem('ah_user_fname', fName);
+    localStorage.setItem('ah_user_lname', lName);
+    userData.firstName = fName; userData.lastName = lName;
+    const overlay = document.getElementById('login-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.8s ease';
+    setTimeout(() => { overlay.remove(); startIntroSequence(); }, 800);
+}
+
+// =============================================
+// INTRO SEQUENCE
+// =============================================
+function startIntroSequence() {
+    // Scroll to top immediately on every visit
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    const overlay = document.getElementById('intro-overlay');
+    const logoEl = document.getElementById('intro-logo');
+    const helloEl = document.getElementById('intro-hello');
+    const subEl = document.getElementById('intro-sub');
+    const specialEl = document.getElementById('intro-special-msg');
+    const mainApp = document.getElementById('main-app-container');
+    const topBar = document.getElementById('main-top-bar');
+
+    // Reset all elements
+    [logoEl, helloEl, subEl, specialEl].forEach(el => {
+        if (el) { el.classList.remove('show'); el.style.transform = ''; el.style.opacity = ''; }
+    });
+
+    const specialTeachers = [
+        { f: 'حامد', l: 'مولایی' }, { f: 'حسین', l: 'بختیاری' },
+        { f: 'محمد', l: 'قاسمی' }, { f: 'مصطفی', l: 'شعبانی' }
+    ];
+    const foundTeacher = specialTeachers.find(t =>
+        t.f === userData.firstName.trim() && t.l === userData.lastName.trim()
+    );
+
+    const isAbolfazl = userData.firstName.includes('ابوالفضل') || userData.firstName.toLowerCase().includes('abolfazl');
+    const isHazrati = userData.lastName.includes('حضرتی') || userData.lastName.toLowerCase().includes('hazrati');
+
+    overlay.classList.add('active');
+
+    const helloMsg = currentLang === 'fa' ? 
+        (foundTeacher ? `استاد ${userData.lastName} عزیز، سلام!` : `${userData.firstName} عزیز، سلام!`) :
+        (foundTeacher ? `Dear Prof. ${userData.lastName}!` : `Hello, ${userData.firstName}!`);
+    
+    const subMsg = currentLang === 'fa' ? 'ماشین‌حساب حرفه‌ای Pro Calculator' : 'Pro Calculator — Professional Calculator';
+
+    if (isAbolfazl && isHazrati) {
+        specialEl.textContent = 'امیدوارم در مسابقات اول شیم ابوالفضل حضرتی عزیز ممنون که پا به پام تلاش کردی تا این رو به این درجه برسونیم';
+        setTimeout(() => { logoEl.classList.add('show'); }, 100);
+        setTimeout(() => { specialEl.classList.add('show'); }, 400);
+        setTimeout(() => { helloEl.textContent = helloMsg; helloEl.classList.add('show'); }, 1800);
+        setTimeout(() => { subEl.textContent = subMsg; subEl.classList.add('show'); }, 2600);
+        setTimeout(() => finishIntro(overlay, mainApp, topBar), 4500);
+    } else {
+        setTimeout(() => { logoEl.classList.add('show'); }, 100);
+        setTimeout(() => { helloEl.textContent = helloMsg; helloEl.classList.add('show'); }, 400);
+        setTimeout(() => {
+            helloEl.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            helloEl.style.opacity = '0';
+            helloEl.style.transform = 'translateY(-20px)';
+        }, 1600);
+        setTimeout(() => { subEl.textContent = subMsg; subEl.classList.add('show'); }, 2000);
+        setTimeout(() => finishIntro(overlay, mainApp, topBar), 3400);
+    }
+}
+
+function finishIntro(overlay, mainApp, topBar) {
+    overlay.style.transition = 'opacity 0.6s ease';
+    overlay.style.opacity = '0';
+    mainApp.classList.add('app-visible');
+    topBar.style.display = 'flex';
+    topBar.style.opacity = '0';
+    topBar.style.transition = 'opacity 0.6s ease';
+    // Ensure page is at top
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(() => { topBar.style.opacity = '1'; }, 50);
+    setTimeout(() => {
+        overlay.classList.remove('active');
+        overlay.style.display = 'none';
+        buildBottomNav();
+        buildDrawer();
+        renderBasic();
+        switchTab('basic');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 650);
+}
+
+// =============================================
+// DRAWER
+// =============================================
+function buildDrawer() {
+    const items = t('drawerItems');
+    const drawerItems = document.getElementById('drawer-items');
+    document.getElementById('drawer-user').textContent = `${userData.firstName} ${userData.lastName}`;
+    
+    let html = '';
+    items.forEach(item => {
+        html += `<div class="drawer-item" onclick="${item.fn}">
+            <div class="drawer-item-icon" style="background:${item.bg};">${item.icon}</div>
+            <span>${item.label}</span>
+        </div>`;
+    });
+    drawerItems.innerHTML = html;
+
+    const actions = t('drawerActions');
+    const actionBar = document.getElementById('drawer-action-bar');
+    let aHtml = '';
+    actions.forEach(a => {
+        aHtml += `<div class="drawer-action-item" onclick="${a.fn}"><span class="da-icon">${a.icon}</span><span>${a.label}</span></div>`;
+    });
+    actionBar.innerHTML = aHtml;
+}
+
+function openDrawer() { document.getElementById('drawer-overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer-overlay').classList.remove('open'); }
+
+// =============================================
+// BOTTOM NAV
+// =============================================
+function buildBottomNav() {
+    const tabs = t('tabs');
+    const keys = t('tabKeys');
+    const inner = document.getElementById('bottom-nav-inner');
+    let html = '';
+    tabs.forEach((label, i) => {
+        const key = keys[i];
+        html += `<button onclick="switchTab('${key}')" id="tab-${key}" class="nav-pill flex-1 py-2.5 px-2 text-xs font-semibold text-gray-600 dark:text-gray-300 transition-all duration-300 min-w-fit">${label}</button>`;
+    });
+    inner.innerHTML = html;
+    // activate basic
+    const el = document.getElementById('tab-basic');
+    if (el) el.classList.add('active');
+}
+
+// =============================================
+// SEARCH
+// =============================================
+function openSearch() {
+    showToast(currentLang === 'fa' ? 'جستجو در تب‌ها' : 'Search tabs');
+}
+
+// =============================================
+// SETTINGS FULLSCREEN
+// =============================================
+function openSettingsPanel() {
+    closeDrawer();
+    renderSettings();
+    openFullscreen('settings-panel');
+}
+
+function renderSettings() {
+    const savedTheme = localStorage.getItem('pc_theme') || 'blue';
+    const themes = [
+        {name:'blue', color:'#3b82f6', label: currentLang === 'fa' ? 'آبی' : 'Blue'},
+        {name:'purple', color:'#8b5cf6', label: currentLang === 'fa' ? 'بنفش' : 'Purple'},
+        {name:'green', color:'#10b981', label: currentLang === 'fa' ? 'سبز' : 'Green'},
+        {name:'red', color:'#ef4444', label: currentLang === 'fa' ? 'قرمز' : 'Red'},
+        {name:'orange', color:'#f97316', label: currentLang === 'fa' ? 'نارنجی' : 'Orange'},
+    ];
+    const content = document.getElementById('settings-panel-content');
+    const isFA = currentLang === 'fa';
+    content.innerHTML = `
+        <h2 style="font-size:1.5rem;font-weight:800;color:${isDarkMode?'#e2e8f0':'#1a1a2e'};margin-bottom:20px;text-align:center;">${t('settings')}</h2>
+
+        <!-- User Card -->
+        <div class="settings-section">
+            <div class="settings-card" style="display:flex;align-items:center;gap:14px;">
+                <div style="width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 4px 12px var(--accent-glow);">👤</div>
+                <div>
+                    <div style="font-size:0.75rem;color:#9ca3af;font-weight:500;">${t('user')}</div>
+                    <div style="font-size:1rem;font-weight:800;color:${isDarkMode?'#e2e8f0':'#1a1a2e'};">${userData.firstName} ${userData.lastName}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-section">
+            <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">${isFA ? 'ظاهر' : 'APPEARANCE'}</div>
+            <div class="settings-card">
+                <div class="settings-row" onclick="toggleTheme()">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">🌙</span>
+                        <span style="font-weight:600;color:${isDarkMode?'#e2e8f0':'#374151'};">${t('darkMode')}</span>
+                    </div>
+                    <div class="toggle-switch ${isDarkMode?'on':''}" id="dark-toggle"></div>
+                </div>
+                <div class="settings-row" onclick="toggleSyncSystem()">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">📱</span>
+                        <span style="font-weight:600;color:${isDarkMode?'#e2e8f0':'#374151'};">${t('syncSystem')}</span>
+                    </div>
+                    <div class="toggle-switch ${syncDarkWithSystem?'on':''}" id="sync-toggle"></div>
+                </div>
+                <div style="padding:12px 4px 4px;">
+                    <div style="font-size:0.85rem;font-weight:600;color:${isDarkMode?'#9ca3af':'#6b7280'};margin-bottom:12px;">${t('colorTheme')}</div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        ${themes.map(th => `<div class="theme-color-dot ${savedTheme===th.name?'selected':''}" style="background:${th.color};" onclick="applyTheme('${th.name}');renderSettings();" title="${th.label}"></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Language -->
+        <div class="settings-section">
+            <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">${isFA ? 'زبان' : 'LANGUAGE'}</div>
+            <div class="settings-card">
+                <div class="settings-row" onclick="switchLang('fa')">
+                    <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.1rem;">🇮🇷</span><span style="font-weight:600;color:${isDarkMode?'#e2e8f0':'#374151'};">فارسی</span></div>
+                    ${currentLang==='fa'?`<span style="color:var(--accent);font-size:1.1rem;">✓</span>`:''}
+                </div>
+                <div class="settings-row" onclick="switchLang('en')">
+                    <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.1rem;">🇺🇸</span><span style="font-weight:600;color:${isDarkMode?'#e2e8f0':'#374151'};">English</span></div>
+                    ${currentLang==='en'?`<span style="color:var(--accent);font-size:1.1rem;">✓</span>`:''}
+                </div>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div class="settings-section">
+            <div class="settings-card">
+                <div id="admin-support-section" class="hidden">
+                    <button onclick="openAdminSupport()" class="btn-bubble w-full py-3 rounded-2xl text-gray-700 dark:text-gray-200 font-bold" style="border-radius:1rem;">💬 ${isFA?'سوالات پشتیبانی':'Support Questions'}</button>
+                </div>
+                <div id="user-support-section">
+                    <button onclick="openUserSupportFromSettings()" class="btn-bubble w-full py-3 rounded-2xl text-gray-700 dark:text-gray-200 font-bold" style="border-radius:1rem;">💬 ${isFA?'ارتباط با پشتیبانی':'Contact Support'}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credits -->
+        <div class="settings-section">
+            <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">${t('credits')}</div>
+            <div class="settings-card" style="font-size:0.9rem;color:${isDarkMode?'#9ca3af':'#6b7280'};">
+                <div style="margin-bottom:8px;"><span style="font-weight:600;">${isFA?'طراح:':'Designer:'}</span> امیرحسین نادری</div>
+                <div><span style="font-weight:600;">${isFA?'اسپانسر:':'Sponsor:'}</span> ابوالفضل حضرتی‌زاده</div>
+            </div>
+        </div>
+
+        <div style="height:40px;"></div>
+    `;
+
+    // Show admin section if needed
+    checkAdminAccess();
+}
+
+function checkAdminAccess() {
+    const n = s => s.replace(/\s+/g,'').toLowerCase();
+    const isAdmin = (n(userData.firstName)==='امیرحسین'||n(userData.firstName)==='amirhosein') && (n(userData.lastName)==='نادری'||n(userData.lastName)==='naderi') ||
+                    (n(userData.firstName)==='ابوالفضل'||n(userData.firstName)==='abolfazl') && (n(userData.lastName).includes('حضرتی')||n(userData.lastName).includes('hazrati'));
+    const adminEl = document.getElementById('admin-support-section');
+    const userEl = document.getElementById('user-support-section');
+    if (adminEl && userEl) {
+        if (isAdmin) { adminEl.classList.remove('hidden'); userEl.classList.add('hidden'); }
+        else { adminEl.classList.add('hidden'); userEl.classList.remove('hidden'); }
+    }
+}
+
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem('pc_dark', isDarkMode);
+    renderSettings();
+}
+
+function toggleSyncSystem() {
+    syncDarkWithSystem = !syncDarkWithSystem;
+    localStorage.setItem('pc_sync_dark', syncDarkWithSystem);
+    if (syncDarkWithSystem) {
+        isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem('pc_dark', isDarkMode);
+    }
+    renderSettings();
+}
+
+function switchLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('pc_lang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+    buildBottomNav();
+    buildDrawer();
+    renderSettings();
+    switchTab(currentTab);
+    showToast(lang === 'fa' ? 'زبان فارسی انتخاب شد' : 'Language changed to English');
+}
+
+function openUserSupportFromSettings() {
+    closeFullscreen('settings-panel');
+    setTimeout(() => { loadUserQuestions(); openModal('user-support-modal'); }, 300);
+}
+
+// =============================================
+// FULLSCREEN HELPERS
+// =============================================
+function openFullscreen(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'flex';
+    requestAnimationFrame(() => el.classList.add('open'));
+}
+function closeFullscreen(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('open');
+    setTimeout(() => { el.style.display = ''; }, 400);
+}
+function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+// =============================================
+// MENU/MODAL HELPERS
+// =============================================
+function openHistory() { openModal('history-modal'); closeDrawer(); renderHistoryList(); }
+function openPowerConvert() { openModal('power-convert-modal'); closeDrawer(); setPowerConvertMode('power'); }
+
+// =============================================
+// UTILITY
+// =============================================
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+let _toastTimer = null;
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    toast.innerText = msg;
+    toast.classList.add('show');
+    _toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        _toastTimer = null;
+    }, 2200);
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(currentLang === 'fa' ? 'کپی شد!' : 'Copied!');
+    }).catch(() => {
+        try {
+            const el = document.createElement('textarea');
+            el.value = text; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el);
+            showToast(currentLang === 'fa' ? 'کپی شد!' : 'Copied!');
+        } catch(e) {}
+    });
+}
+
+function addToHistory(expression, result) {
+    if (result === 'Error') return;
+    calcHistory.unshift({ exp: expression, res: result, time: new Date().toLocaleTimeString() });
+    if (calcHistory.length > 20) calcHistory.pop();
+}
+
+// =============================================
+// TAB SWITCHING
+// =============================================
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.nav-pill').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.id === `tab-${tab}`) btn.classList.add('active');
+    });
+    const content = document.getElementById('app-content');
+    content.style.opacity = '0';
+    setTimeout(() => {
+        content.innerHTML = '';
+        switch(tab) {
+            case 'basic': displayVal = '0'; renderBasic(); break;
+            case 'pythagoras': renderPythagoras(); break;
+            case 'fraction': renderFraction(); break;
+            case 'factorize': renderFactorize(); break;
+            case 'equation': renderEquation(); break;
+            case 'properties': renderProperties(); break;
+            case 'sieve': renderSieve(); break;
+            case 'metals': renderMetals(); break;
+            case 'geometry': renderGeometry(); break;
+            case 'currency': renderCurrency(); break;
+        }
+        content.style.opacity = '1';
+    }, 150);
+}
+
+// =============================================
+// BASIC CALCULATOR
+// =============================================
+function renderBasic() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col h-full justify-end gap-3">
+            <div class="glass-panel rounded-[2rem] px-5 py-4 text-right flex flex-col justify-center min-h-[5rem] shadow-inner border-2">
+                <span class="text-3xl sm:text-4xl font-mono font-semibold text-gray-800 dark:text-gray-100 break-all tracking-tight" id="calc-display" dir="ltr">${displayVal}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(5,1fr);gap:10px;">
+                <button onclick="inputParen('(');playClick();ledBtn(this)" class="btn-bubble btn-func h-14 sm:h-16 w-full rounded-full font-semibold flex items-center justify-center">(</button>
+                <button onclick="inputParen(')');playClick();ledBtn(this)" class="btn-bubble btn-func h-14 sm:h-16 w-full rounded-full font-semibold flex items-center justify-center">)</button>
+                <button onclick="handlePercent();playClick();ledBtn(this)" class="btn-bubble btn-func h-14 sm:h-16 w-full rounded-full font-semibold flex items-center justify-center">%</button>
+                <button onclick="handleSqrt();playClick();ledBtn(this)" class="btn-bubble btn-func h-14 sm:h-16 w-full rounded-full font-semibold flex items-center justify-center">√</button>
+
+                <button onclick="handleClear();playClick('ac');ledBtn(this)" class="btn-bubble btn-ac h-14 sm:h-16 w-full rounded-full font-semibold text-lg flex items-center justify-center">AC</button>
+                <button onclick="handleOp('/');playClick('op');ledBtn(this)" class="btn-bubble btn-op h-14 sm:h-16 w-full rounded-full font-semibold text-xl flex items-center justify-center">÷</button>
+                <button onclick="handleOp('*');playClick('op');ledBtn(this)" class="btn-bubble btn-op h-14 sm:h-16 w-full rounded-full font-semibold text-xl flex items-center justify-center">×</button>
+                <button onclick="handleOp('-');playClick('op');ledBtn(this)" class="btn-bubble btn-op h-14 sm:h-16 w-full rounded-full font-semibold text-xl flex items-center justify-center">-</button>
+
+                <button onclick="inputDigit(7);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">7</button>
+                <button onclick="inputDigit(8);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">8</button>
+                <button onclick="inputDigit(9);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">9</button>
+                <button onclick="handleOp('+');playClick('op');ledBtn(this)" class="btn-bubble btn-op h-14 sm:h-16 w-full rounded-full font-semibold text-xl flex items-center justify-center" style="grid-row:span 1">+</button>
+
+                <button onclick="inputDigit(4);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">4</button>
+                <button onclick="inputDigit(5);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">5</button>
+                <button onclick="inputDigit(6);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">6</button>
+                <button onclick="handleEqual();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq font-semibold text-3xl flex items-center justify-center" style="grid-row:span 2;border-radius:2rem;">=</button>
+
+                <button onclick="inputDigit(1);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">1</button>
+                <button onclick="inputDigit(2);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">2</button>
+                <button onclick="inputDigit(3);playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">3</button>
+
+                <button onclick="inputDigit(0);playClick();ledBtn(this)" class="btn-bubble rounded-full font-medium text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center h-14 sm:h-16" style="grid-column:span 2">0</button>
+                <button onclick="inputDot();playClick();ledBtn(this)" class="btn-bubble h-14 sm:h-16 w-full rounded-full font-semibold text-2xl text-gray-600 dark:text-gray-300 flex items-center justify-center">.</button>
+            </div>
+        </div>
+    `;
+}
+
+function updateDisplay() { const d = document.getElementById('calc-display'); if(d) d.innerText = displayVal; }
+function inputDigit(digit) { if(displayVal==='0'||displayVal==='Error') displayVal=String(digit); else displayVal+=digit; updateDisplay(); }
+function inputDot() { if(displayVal.slice(-1)!=='.') { displayVal+='.'; updateDisplay(); } }
+function inputParen(p) { if(displayVal==='0'&&p==='(') displayVal='('; else if(displayVal==='Error') displayVal=p; else displayVal+=p; updateDisplay(); }
+function handleOp(op) { if(displayVal==='Error') displayVal='0'; const l=displayVal.slice(-1); if(['+','-','*','/'].includes(l)) displayVal=displayVal.slice(0,-1)+op; else displayVal+=op; updateDisplay(); }
+function handleClear() { displayVal='0'; updateDisplay(); }
+function handlePercent() { try { const v=parseFloat(eval(displayVal)); if(!isNaN(v)) { displayVal=String(v/100); updateDisplay(); } } catch(e){} }
+function handleSqrt() { try { const v=parseFloat(eval(displayVal)); if(!isNaN(v)&&v>=0) { displayVal=String(Math.sqrt(v)); updateDisplay(); } } catch(e){} }
+function handleEqual() {
+    try {
+        const exp = displayVal;
+        const result = Function('"use strict";return ('+exp+')')();
+        const r = parseFloat(result.toFixed(10));
+        addToHistory(exp, String(r));
+        displayVal = String(r);
+        updateDisplay();
+    } catch(e) { displayVal='Error'; updateDisplay(); }
+}
+
+// =============================================
+// PYTHAGORAS
+// =============================================
+function renderPythagoras() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'قضیه فیثاغورس':'Pythagoras Theorem'}</h3>
+            <div class="glass-panel rounded-2xl p-4 text-center border-2">
+                <div class="text-4xl mb-2">📐</div>
+                <p class="text-2xl font-mono font-bold text-gray-700 dark:text-gray-200" dir="ltr">a² + b² = c²</p>
+            </div>
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-1 border-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-center mb-2">${isFA?'برای محاسبه c، ضلع‌های a و b را وارد کنید':'Enter sides a and b to calculate c'}</p>
+                <div class="flex gap-2">
+                    <input type="number" id="pyth-a" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'ضلع a':'Side a'}" dir="ltr" min="0" step="0.01">
+                    <input type="number" id="pyth-b" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'ضلع b':'Side b'}" dir="ltr" min="0" step="0.01">
+                </div>
+            </div>
+            <button onclick="calcPythagoras();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'محاسبه c':'Calculate c'}</button>
+            <div id="pyth-result" class="glass-panel rounded-2xl p-5 text-center min-h-[80px] flex items-center justify-center border-2">
+                <span class="text-gray-400 dark:text-gray-500">${isFA?'نتیجه اینجا':'Result here'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function calcPythagoras() {
+    const a = parseFloat(document.getElementById('pyth-a').value);
+    const b = parseFloat(document.getElementById('pyth-b').value);
+    const r = document.getElementById('pyth-result');
+    const isFA = currentLang === 'fa';
+    if (isNaN(a)||isNaN(b)||a<0||b<0) { r.innerHTML=`<span class="text-red-500 font-bold">${isFA?'ورودی‌ها را درست وارد کنید':'Enter valid values'}</span>`; return; }
+    const c = Math.sqrt(a*a+b*b);
+    r.innerHTML = `
+        <div class="flex flex-col gap-2 w-full">
+            <div class="text-3xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">c = ${c.toFixed(6)}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400" dir="ltr">√(${a}² + ${b}²) = √${(a*a+b*b).toFixed(4)}</div>
+        </div>`;
+}
+
+// =============================================
+// FRACTION TAB (standalone)
+// =============================================
+function renderFraction() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'محاسبه‌گر کسر':'Fraction Calculator'}</h3>
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 border-2">
+                <p class="text-sm text-center text-gray-600 dark:text-gray-300 font-semibold">${isFA?'کسر اول':'First Fraction'}</p>
+                <div class="flex items-center gap-2 justify-center">
+                    <input type="number" id="f1n" class="glass-input w-20 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'صورت':'Num'}" dir="ltr">
+                    <span class="text-2xl font-bold text-gray-600 dark:text-gray-300">/</span>
+                    <input type="number" id="f1d" class="glass-input w-20 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'مخرج':'Den'}" dir="ltr">
+                </div>
+            </div>
+            <div class="flex justify-center gap-2 flex-wrap">
+                ${['+','-','×','÷'].map(op=>`<button onclick="setFracOp('${op}');playClick('op');ledBtn(this)" id="frac-op-${op}" class="btn-bubble btn-op h-10 w-14 rounded-full font-bold text-xl flex items-center justify-center">${op}</button>`).join('')}
+            </div>
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 border-2">
+                <p class="text-sm text-center text-gray-600 dark:text-gray-300 font-semibold">${isFA?'کسر دوم':'Second Fraction'}</p>
+                <div class="flex items-center gap-2 justify-center">
+                    <input type="number" id="f2n" class="glass-input w-20 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'صورت':'Num'}" dir="ltr">
+                    <span class="text-2xl font-bold text-gray-600 dark:text-gray-300">/</span>
+                    <input type="number" id="f2d" class="glass-input w-20 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'مخرج':'Den'}" dir="ltr">
+                </div>
+            </div>
+            <button onclick="calcFraction();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'محاسبه':'Calculate'}</button>
+            <div id="frac-result" class="glass-panel rounded-2xl p-5 text-center min-h-[80px] flex items-center justify-center border-2">
+                <span class="text-gray-400">${isFA?'نتیجه اینجا':'Result here'}</span>
+            </div>
+        </div>
+    `;
+    window._fracOp = '+';
+    const firstBtn = document.getElementById('frac-op-+');
+    if (firstBtn) firstBtn.style.boxShadow = '0 0 0 2px var(--accent)';
+}
+
+let _fracOp = '+';
+function setFracOp(op) {
+    _fracOp = op;
+    ['+','-','×','÷'].forEach(o => {
+        const b = document.getElementById(`frac-op-${o}`);
+        if (b) b.style.boxShadow = o === op ? '0 0 0 2px var(--accent), 0 4px 12px var(--accent-glow)' : '';
+    });
+}
+function calcFraction() {
+    const n1=parseInt(document.getElementById('f1n')?.value||0),d1=parseInt(document.getElementById('f1d')?.value||1);
+    const n2=parseInt(document.getElementById('f2n')?.value||0),d2=parseInt(document.getElementById('f2d')?.value||1);
+    const r=document.getElementById('frac-result');
+    const isFA=currentLang==='fa';
+    if(!d1||!d2){r.innerHTML=`<span class="text-red-500">${isFA?'مخرج نمی‌تواند صفر باشد':'Denominator cannot be zero'}</span>`;return;}
+    let rn,rd;
+    if(_fracOp==='+'){rn=n1*d2+n2*d1;rd=d1*d2;}
+    else if(_fracOp==='-'){rn=n1*d2-n2*d1;rd=d1*d2;}
+    else if(_fracOp==='×'){rn=n1*n2;rd=d1*d2;}
+    else if(_fracOp==='÷'){if(!n2){r.innerHTML=`<span class="text-red-500">${isFA?'تقسیم بر صفر':'Division by zero'}</span>`;return;}rn=n1*d2;rd=d1*n2;}
+    const g=gcd(Math.abs(rn),Math.abs(rd));
+    const sn=rn/g,sd=rd/g;
+    r.innerHTML=`<div class="flex flex-col items-center gap-2"><div style="font-size:1.8rem;font-weight:800;font-family:'Tahoma',monospace;color:${isDarkMode?'#34d399':'#059669'};" dir="ltr">${sd===1?sn:sn+'/'+sd}</div><div class="text-sm text-gray-500" dir="ltr">= ${(rn/rd).toFixed(6)}</div></div>`;
+}
+
+// =============================================
+// FACTORIZE
+// =============================================
+function renderFactorize() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'تجزیه عبارت':'Factorization'}</h3>
+            <div class="glass-panel rounded-full p-1.5 flex gap-1 border">
+                <button onclick="setFactorizeSubTab('algebraic')" id="btn-fact-algebraic" class="flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all">${isFA?'عبارت جبری':'Algebraic'}</button>
+                <button onclick="setFactorizeSubTab('fraction')" id="btn-fact-fraction" class="flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all">${isFA?'کسر جبری':'Fraction'}</button>
+                <button onclick="setFactorizeSubTab('number')" id="btn-fact-number" class="flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all">${isFA?'اعداد':'Numbers'}</button>
+            </div>
+            <div id="factorize-inputs" class="flex flex-col gap-3"></div>
+            <button onclick="performFactorize();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'تجزیه کن':'Factorize'}</button>
+            <div id="factorize-result" class="glass-panel min-h-[5rem] rounded-2xl flex flex-col items-center justify-center p-4 text-center font-bold text-gray-700 dark:text-gray-200 border-2">
+                ${isFA?'منتظر ورودی...':'Waiting for input...'}
+            </div>
+        </div>
+    `;
+    setFactorizeSubTab('algebraic');
+}
+
+function setFactorizeSubTab(mode) {
+    factorizeSubTab = mode;
+    ['algebraic','fraction','number'].forEach(btn => {
+        const el = document.getElementById(`btn-fact-${btn}`);
+        if (!el) return;
+        el.className = btn === mode
+            ? "flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all"
+            : "flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all";
+    });
+    const container = document.getElementById('factorize-inputs');
+    const resultArea = document.getElementById('factorize-result');
+    const isFA = currentLang === 'fa';
+    if (resultArea) resultArea.innerText = isFA ? 'منتظر ورودی...' : 'Waiting for input...';
+    variablePowers = {};
+
+    if (mode === 'algebraic') {
+        container.innerHTML = `
+            <p class="text-sm text-gray-600 dark:text-gray-300 text-center font-semibold">${isFA?'عبارت جبری را وارد کنید':'Enter algebraic expression'}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 text-center">${isFA?'مثال: xy+xy² یا 2ab+3a':'e.g. xy+xy² or 2ab+3a'}</p>
+            <input type="text" id="alg-expr" class="glass-input w-full h-14 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'مثلا: xy+xy²':'e.g.: xy+xy²'}" dir="ltr" oninput="detectVariables()">
+            <div id="power-badges-container" class="w-full flex flex-wrap gap-2 justify-center min-h-[50px] items-center mt-2">
+                <p class="text-xs text-gray-400">${isFA?'توان‌ها اینجا نمایش داده می‌شوند':'Powers shown here'}</p>
+            </div>
+        `;
+    } else if (mode === 'fraction') {
+        container.innerHTML = `
+            <div class="glass-panel p-3 rounded-2xl">
+                <label class="text-xs text-gray-600 dark:text-gray-300 mb-2 block text-center font-bold">${isFA?'صورت کسر':'Numerator'}</label>
+                <input type="text" id="frac-num-expr" class="glass-input w-full h-12 rounded-xl text-center font-mono" placeholder="${isFA?'مثلا: x²-4':'e.g.: x²-4'}" dir="ltr" oninput="detectVariablesFraction('num')">
+                <div id="power-badges-num" class="w-full flex flex-wrap gap-2 justify-center min-h-[40px] items-center mt-2">
+                    <p class="text-xs text-gray-400">${isFA?'توان‌های صورت':'Numerator powers'}</p>
+                </div>
+            </div>
+            <div class="w-full h-px bg-gray-300/40 my-1"></div>
+            <div class="glass-panel p-3 rounded-2xl">
+                <label class="text-xs text-gray-600 dark:text-gray-300 mb-2 block text-center font-bold">${isFA?'مخرج کسر':'Denominator'}</label>
+                <input type="text" id="frac-den-expr" class="glass-input w-full h-12 rounded-xl text-center font-mono" placeholder="${isFA?'مثلا: 2x+4':'e.g.: 2x+4'}" dir="ltr" oninput="detectVariablesFraction('den')">
+                <div id="power-badges-den" class="w-full flex flex-wrap gap-2 justify-center min-h-[40px] items-center mt-2">
+                    <p class="text-xs text-gray-400">${isFA?'توان‌های مخرج':'Denominator powers'}</p>
+                </div>
+            </div>
+        `;
+    } else if (mode === 'number') {
+        container.innerHTML = `
+            <p class="text-sm text-gray-600 dark:text-gray-300 text-center">${isFA?'عدد را برای تجزیه وارد کنید':'Enter a number to factorize'}</p>
+            <input type="number" id="factorize-num" class="glass-input w-full h-14 rounded-xl text-center font-mono text-xl" placeholder="${isFA?'عدد':'Number'}" dir="ltr" min="2">
+        `;
+    }
+}
+
+function detectVariables() {
+    const exprEl = document.getElementById('alg-expr');
+    if (!exprEl) return;
+    const expr = exprEl.value;
+    const container = document.getElementById('power-badges-container');
+    if (!container) return;
+    const varPattern = /([a-z])(\^?\d*)/gi;
+    const matches = {};
+    let match;
+    while ((match = varPattern.exec(expr)) !== null) {
+        const v = match[1].toLowerCase();
+        if (!matches[v]) matches[v] = [];
+        matches[v].push(match.index);
+    }
+    if (Object.keys(matches).length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-400">${currentLang==='fa'?'توان‌ها اینجا':'Powers shown here'}</p>`;
+        variablePowers = {}; return;
+    }
+    for (const v in matches) {
+        if (!variablePowers[v]) variablePowers[v] = {};
+        matches[v].forEach((pos, idx) => { const key=`${v}_${idx+1}`; if(!variablePowers[v][key]) variablePowers[v][key]=1; });
+        for (const k in variablePowers[v]) { if(parseInt(k.split('_')[1])>matches[v].length) delete variablePowers[v][k]; }
+    }
+    for (const v in variablePowers) { if (!matches[v]) delete variablePowers[v]; }
+    let html = '';
+    for (const v in variablePowers) {
+        for (const ok in variablePowers[v]) {
+            const [vn,on] = ok.split('_');
+            const lbl = Object.keys(variablePowers[v]).length>1 ? `${vn}(${on==='1'?'₁':on==='2'?'₂':'₃'})` : vn;
+            html += `<div class="power-badge"><span class="font-mono">${lbl}</span><span class="text-xs">${currentLang==='fa'?'توان:':'^'}</span><input type="number" class="power-input" value="${variablePowers[v][ok]}" min="0" onchange="updatePower('${v}','${ok}',this.value)" onclick="event.stopPropagation()"><button class="remove-power-btn" onclick="removePower('${v}','${ok}')">×</button></div>`;
+        }
+    }
+    container.innerHTML = html || `<p class="text-xs text-gray-400">${currentLang==='fa'?'توان‌ها':'Powers'}</p>`;
+}
+
+function detectVariablesFraction(type) {
+    const inputId = type==='num'?'frac-num-expr':'frac-den-expr';
+    const containerId = type==='num'?'power-badges-num':'power-badges-den';
+    const exprEl = document.getElementById(inputId);
+    const container = document.getElementById(containerId);
+    if (!exprEl || !container) return;
+    const expr = exprEl.value;
+    const varPattern = /([a-z])(\^?\d*)/gi;
+    const matches = {};
+    let match;
+    while ((match = varPattern.exec(expr)) !== null) { const v=match[1].toLowerCase(); if(!matches[v]) matches[v]=[]; matches[v].push(match.index); }
+    const sk = type==='num'?'numPowers':'denPowers';
+    if (!variablePowers[sk]) variablePowers[sk] = {};
+    if (Object.keys(matches).length===0) { container.innerHTML=`<p class="text-xs text-gray-400">${currentLang==='fa'?(type==='num'?'توان‌های صورت':'توان‌های مخرج'):(type==='num'?'Num powers':'Den powers')}</p>`; variablePowers[sk]={}; return; }
+    for (const v in matches) {
+        if (!variablePowers[sk][v]) variablePowers[sk][v]={};
+        matches[v].forEach((pos,idx)=>{const k=`${v}_${idx+1}`;if(!variablePowers[sk][v][k])variablePowers[sk][v][k]=1;});
+        for (const k in variablePowers[sk][v]){if(parseInt(k.split('_')[1])>matches[v].length)delete variablePowers[sk][v][k];}
+    }
+    for (const v in variablePowers[sk]){if(!matches[v])delete variablePowers[sk][v];}
+    let html='';
+    for (const v in variablePowers[sk]){for(const ok in variablePowers[sk][v]){const[vn,on]=ok.split('_');const lbl=Object.keys(variablePowers[sk][v]).length>1?`${vn}(${on==='1'?'₁':on==='2'?'₂':'₃'})`:vn;html+=`<div class="power-badge"><span class="font-mono">${lbl}</span><span class="text-xs">^</span><input type="number" class="power-input" value="${variablePowers[sk][v][ok]}" min="0" onchange="updatePowerFraction('${type}','${v}','${ok}',this.value)" onclick="event.stopPropagation()"><button class="remove-power-btn" onclick="removePowerFraction('${type}','${v}','${ok}')">×</button></div>`;}}
+    container.innerHTML = html || `<p class="text-xs text-gray-400">${currentLang==='fa'?'توان‌ها':'Powers'}</p>`;
+}
+
+function updatePower(v,ok,val){if(variablePowers[v])variablePowers[v][ok]=parseInt(val)||1;}
+function updatePowerFraction(type,v,ok,val){const sk=type==='num'?'numPowers':'denPowers';if(variablePowers[sk]&&variablePowers[sk][v])variablePowers[sk][v][ok]=parseInt(val)||1;}
+function removePower(v,ok){if(variablePowers[v]){delete variablePowers[v][ok];if(!Object.keys(variablePowers[v]).length)delete variablePowers[v];}detectVariables();}
+function removePowerFraction(type,v,ok){const sk=type==='num'?'numPowers':'denPowers';if(variablePowers[sk]&&variablePowers[sk][v]){delete variablePowers[sk][v][ok];if(!Object.keys(variablePowers[sk][v]).length)delete variablePowers[sk][v];}detectVariablesFraction(type);}
+
+function performFactorize() {
+    const resDiv = document.getElementById('factorize-result');
+    const isFA = currentLang === 'fa';
+    if (factorizeSubTab === 'number') {
+        const numEl = document.getElementById('factorize-num');
+        if (!numEl) return;
+        const num = parseInt(numEl.value);
+        if (isNaN(num)||num<2) { resDiv.innerHTML=`<span class="text-red-500">${isFA?'عدد باید ≥ 2 باشد':'Number must be ≥ 2'}</span>`; return; }
+        const factors = [];
+        let n = num;
+        for (let i=2;i*i<=n;i++){while(n%i===0){factors.push(i);n/=i;}}
+        if (n>1) factors.push(n);
+        const facMap = {};
+        factors.forEach(f=>{facMap[f]=(facMap[f]||0)+1;});
+        const display = Object.entries(facMap).map(([f,p])=>p>1?`${f}^${p}`:f).join(' × ');
+        resDiv.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="text-2xl font-bold text-green-600 dark:text-green-400" dir="ltr">${num} = ${display}</div><div class="flex flex-wrap gap-2 justify-center">${Object.entries(facMap).map(([f,p])=>`<span class="power-badge">${f}${p>1?`<sup>${p}</sup>`:''}</span>`).join('')}</div></div>`;
+        return;
+    }
+    if (factorizeSubTab === 'algebraic') {
+        const exprInput = document.getElementById('alg-expr');
+        if (!exprInput) return;
+        const expr = exprInput.value.trim();
+        if (!expr) { resDiv.innerHTML=`<span class="text-red-500">${isFA?'لطفاً عبارت را وارد کنید':'Enter expression'}</span>`; return; }
+        try {
+            const result = factorizeExpressionWithPowers(expr, variablePowers);
+            resDiv.innerHTML = `<div class="factorization-display">${result}</div>`;
+        } catch(e) { resDiv.innerHTML=`<span class="text-red-500">${isFA?'خطا در تجزیه':'Factorization error'}</span>`; }
+        return;
+    }
+    if (factorizeSubTab === 'fraction') {
+        const numExpr = document.getElementById('frac-num-expr')?.value.trim();
+        const denExpr = document.getElementById('frac-den-expr')?.value.trim();
+        if (!numExpr||!denExpr) { resDiv.innerHTML=`<span class="text-red-500">${isFA?'صورت و مخرج را وارد کنید':'Enter numerator and denominator'}</span>`; return; }
+        try {
+            const numP = variablePowers.numPowers||{};
+            const denP = variablePowers.denPowers||{};
+            const numF = factorizeExpressionWithPowers(numExpr,numP);
+            const denF = factorizeExpressionWithPowers(denExpr,denP);
+            const numFacs = extractFactors(numF), denFacs = extractFactors(denF);
+            const common = findCommonFactors(numFacs,denFacs);
+            if (common.length>0) {
+                const canceledHTML = common.map(f=>`<span style="text-decoration:line-through;color:#dc2626;">${f}</span>`).join('');
+                resDiv.innerHTML=`<div class="flex flex-col items-center gap-3 w-full"><div class="text-xs text-gray-600 dark:text-gray-400">${isFA?'عوامل مشترک:':'Common factors:'} ${canceledHTML}</div><div class="flex flex-col items-center"><span class="factorization-display text-base" dir="ltr">${removeCommonFactors(numF,common)}</span><div class="w-full h-0.5 bg-gray-400 rounded my-2"></div><span class="factorization-display text-base" dir="ltr">${removeCommonFactors(denF,common)}</span></div></div>`;
+            } else {
+                resDiv.innerHTML=`<div class="flex flex-col items-center gap-2 w-full"><span class="factorization-display text-base" dir="ltr">${numF}</span><div class="w-full h-0.5 bg-gray-400 rounded my-1"></div><span class="factorization-display text-base" dir="ltr">${denF}</span></div>`;
+            }
+        } catch(e) { resDiv.innerHTML=`<span class="text-red-500">${isFA?'خطا در تجزیه':'Error'}</span>`; }
+    }
+}
+
+function factorizeExpressionWithPowers(expr, powers) {
+    if (!expr) return expr;
+    // Replace powered variables
+    let newExpr = expr;
+    let lastIndex = 0;
+    let result = '';
+    if (powers && typeof powers === 'object') {
+        for (const v in powers) {
+            if (v === 'numPowers' || v === 'denPowers') continue;
+            const vPowers = powers[v];
+            let occurrences = 0;
+            const pattern = new RegExp(v, 'gi');
+            let m;
+            while ((m = pattern.exec(expr)) !== null) {
+                occurrences++;
+                const key = `${v.toLowerCase()}_${occurrences}`;
+                const power = vPowers[key] || 1;
+                if (power > 1) {
+                    newExpr = newExpr.substring(0, m.index + (occurrences-1)) + v + '^' + power + newExpr.substring(m.index + occurrences);
+                }
+            }
+        }
+    }
+    const terms = parseExpression(newExpr);
+    if (terms.length <= 1) return newExpr;
+    const coefficients = terms.map(t => Math.abs(t.coefficient)).filter(c => c !== 0);
+    if (!coefficients.length) return '0';
+    let gcdCoeff = coefficients[0];
+    for (let i=1;i<coefficients.length;i++) gcdCoeff = gcd(gcdCoeff, coefficients[i]);
+    const commonVars = {};
+    if (terms.length > 0) {
+        const firstVars = terms[0].variables;
+        for (const v in firstVars) {
+            let minP = firstVars[v];
+            let inAll = true;
+            for (let i=1;i<terms.length;i++) { if(!terms[i].variables[v]){inAll=false;break;} minP=Math.min(minP,terms[i].variables[v]); }
+            if (inAll && minP > 0) commonVars[v] = minP;
+        }
+    }
+    if (gcdCoeff===1 && !Object.keys(commonVars).length) return newExpr;
+    let factorPart = gcdCoeff > 1 ? String(gcdCoeff) : '';
+    Object.keys(commonVars).sort().forEach(v => { factorPart += v; if(commonVars[v]>1) factorPart += '^' + commonVars[v]; });
+    const reduced = terms.map(t => {
+        let nc = t.coefficient / gcdCoeff;
+        let nv = {...t.variables};
+        for (const v in commonVars) { if(nv[v]) { nv[v]-=commonVars[v]; if(nv[v]===0) delete nv[v]; } }
+        return {coefficient:nc, variables:nv};
+    });
+    const inside = termsToString(reduced);
+    return factorPart && inside !== '0' ? factorPart + '(' + inside + ')' : newExpr;
+}
+
+function parseExpression(expr) {
+    const terms = []; let cur = '', depth = 0;
+    for (let i=0;i<expr.length;i++) {
+        const ch = expr[i];
+        if (ch==='(') depth++; if (ch===')') depth--;
+        if ((ch==='+'||ch==='-') && depth===0 && i>0) { terms.push(parseTerm(cur)); cur = ch==='-'?'-':''; }
+        else cur += ch;
+    }
+    if (cur) terms.push(parseTerm(cur));
+    return terms;
+}
+
+function parseTerm(term) {
+    let coeff = 1; const vars = {};
+    const m = term.match(/^([+-]?\d*\.?\d*)/);
+    if (m && m[1]) {
+        if (m[1]===''||m[1]==='+') coeff=1;
+        else if (m[1]==='-') coeff=-1;
+        else coeff=parseFloat(m[1]);
+        term = term.substring(m[1].length);
+    }
+    const vp = /([a-z])(\^?(\d+))?/gi; let vm;
+    while ((vm=vp.exec(term))!==null) { const v=vm[1].toLowerCase(); const p=vm[3]?parseInt(vm[3]):1; vars[v]=(vars[v]||0)+p; }
+    return {coefficient:coeff, variables:vars};
+}
+
+function termsToString(terms) {
+    if (!terms.length) return '0';
+    let res = '';
+    terms.forEach((t,i) => {
+        if (i===0) { if(t.coefficient<0) res+='-'; }
+        else { res += t.coefficient>=0?' + ':' - '; }
+        const abs = Math.abs(t.coefficient);
+        const hv = Object.keys(t.variables).length > 0;
+        if (abs!==1||!hv) res += Number.isInteger(abs)?abs:abs.toFixed(2);
+        Object.keys(t.variables).sort().forEach(v => { res+=v; if(t.variables[v]>1) res+='^'+t.variables[v]; });
+    });
+    return res;
+}
+
+function extractFactors(expr) {
+    const factors = [];
+    const m1 = expr.match(/^(\d+)/); if(m1) factors.push(m1[1]);
+    const vm = /([a-z](\^[0-9]+)?)/gi; let m;
+    while((m=vm.exec(expr))!==null) factors.push(m[0]);
+    const pm = /\(([^)]+)\)/g;
+    while((m=pm.exec(expr))!==null) factors.push('('+m[1]+')');
+    return factors;
+}
+
+function findCommonFactors(a, b) { return a.filter(f => b.includes(f)); }
+function removeCommonFactors(expr, common) {
+    let r = expr;
+    common.forEach(f => { r = r.replace(f, ''); });
+    return r.replace(/^[×*]|[×*]$/,'').trim() || '1';
+}
+
+// =============================================
+// EQUATION
+// =============================================
+function renderEquation() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'حل معادله':'Equation Solver'}</h3>
+            <div class="glass-panel rounded-full p-1.5 flex gap-1 border">
+                <button onclick="setEqMode('linear')" id="btn-eq-linear" class="flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all">${isFA?'درجه ۱':'Linear'}</button>
+                <button onclick="setEqMode('quad')" id="btn-eq-quad" class="flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all">${isFA?'درجه ۲':'Quadratic'}</button>
+            </div>
+            <div id="eq-content"></div>
+            <button onclick="solveEquation();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'حل کن':'Solve'}</button>
+            <div id="eq-result" class="glass-panel rounded-2xl p-5 text-center min-h-[80px] flex items-center justify-center border-2">
+                <span class="text-gray-400">${isFA?'جواب اینجا':'Answer here'}</span>
+            </div>
+        </div>
+    `;
+    setEqMode('linear');
+}
+
+let eqMode = 'linear';
+function setEqMode(mode) {
+    eqMode = mode;
+    ['linear','quad'].forEach(m => {
+        const el = document.getElementById(`btn-eq-${m}`);
+        if (el) el.className = m===mode ? "flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all" : "flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all";
+    });
+    const isFA = currentLang === 'fa';
+    const c = document.getElementById('eq-content');
+    if (mode === 'linear') {
+        c.innerHTML = `<div class="glass-panel p-4 rounded-2xl"><p class="text-xs text-center text-gray-500 mb-3">${isFA?'ax + b = 0':'ax + b = 0'}</p><div class="flex gap-3"><input type="number" id="eq-a" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="a" dir="ltr"><input type="number" id="eq-b" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="b" dir="ltr"></div></div>`;
+    } else {
+        c.innerHTML = `<div class="glass-panel p-4 rounded-2xl"><p class="text-xs text-center text-gray-500 mb-3">${isFA?'ax² + bx + c = 0':'ax² + bx + c = 0'}</p><div class="flex gap-2"><input type="number" id="eq-a" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="a" dir="ltr"><input type="number" id="eq-b" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="b" dir="ltr"><input type="number" id="eq-c" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="c" dir="ltr"></div></div>`;
+    }
+}
+
+function solveEquation() {
+    const a = parseFloat(document.getElementById('eq-a')?.value || 0);
+    const b = parseFloat(document.getElementById('eq-b')?.value || 0);
+    const cVal = parseFloat(document.getElementById('eq-c')?.value || 0);
+    const r = document.getElementById('eq-result');
+    const isFA = currentLang === 'fa';
+    if (eqMode === 'linear') {
+        if (a === 0) { r.innerHTML=`<span class="text-red-500">${isFA?'ضریب a نمی‌تواند صفر باشد':'Coefficient a cannot be zero'}</span>`; return; }
+        const x = -b/a;
+        r.innerHTML=`<div class="text-3xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">x = ${x.toFixed(6).replace(/\.?0+$/, '')}</div>`;
+    } else {
+        if (a === 0) { r.innerHTML=`<span class="text-red-500">${isFA?'a نمی‌تواند صفر باشد':'a cannot be zero'}</span>`; return; }
+        const disc = b*b - 4*a*cVal;
+        if (disc > 0) {
+            const x1=(-b+Math.sqrt(disc))/(2*a), x2=(-b-Math.sqrt(disc))/(2*a);
+            r.innerHTML=`<div class="flex flex-col gap-2"><div class="text-2xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">x₁ = ${x1.toFixed(6).replace(/\.?0+$/, '')}</div><div class="text-2xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">x₂ = ${x2.toFixed(6).replace(/\.?0+$/, '')}</div></div>`;
+        } else if (disc === 0) {
+            const x = -b/(2*a);
+            r.innerHTML=`<div class="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400" dir="ltr">x = ${x.toFixed(6).replace(/\.?0+$/, '')} (${isFA?'جواب مضاعف':'double root'})</div>`;
+        } else {
+            const real = -b/(2*a), img = Math.sqrt(-disc)/(2*a);
+            r.innerHTML=`<div class="flex flex-col gap-2"><div class="text-xl font-mono font-bold text-purple-600 dark:text-purple-400" dir="ltr">x₁ = ${real.toFixed(4)} + ${img.toFixed(4)}i</div><div class="text-xl font-mono font-bold text-purple-600 dark:text-purple-400" dir="ltr">x₂ = ${real.toFixed(4)} - ${img.toFixed(4)}i</div></div>`;
+        }
+    }
+}
+
+// =============================================
+// PROPERTIES
+// =============================================
+function renderProperties() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'خواص اعداد':'Number Properties'}</h3>
+            <div class="glass-panel rounded-full p-1.5 flex gap-1 border">
+                <button onclick="setPropSubTab('number')" id="btn-prop-number" class="flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all">${isFA?'عدد':'Number'}</button>
+                <button onclick="setPropSubTab('gcd')" id="btn-prop-gcd" class="flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all">${isFA?'ب.م.م / ک.م.م':'GCD/LCM'}</button>
+            </div>
+            <div id="prop-content"></div>
+        </div>
+    `;
+    setPropSubTab('number');
+}
+
+let propSubTab = 'number';
+function setPropSubTab(mode) {
+    propSubTab = mode;
+    ['number','gcd'].forEach(m => {
+        const el = document.getElementById(`btn-prop-${m}`);
+        if(el) el.className = m===mode ? "flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all" : "flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all";
+    });
+    const isFA = currentLang === 'fa';
+    const c = document.getElementById('prop-content');
+    if (mode === 'number') {
+        c.innerHTML = `
+            <input type="number" id="prop-num" class="glass-input w-full h-14 rounded-xl text-center font-mono text-xl" placeholder="${isFA?'عدد را وارد کنید':'Enter a number'}" dir="ltr">
+            <button onclick="calcProps();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg mt-3">${isFA?'بررسی':'Check'}</button>
+            <div id="prop-result" class="glass-panel rounded-2xl p-4 text-center min-h-[80px] flex items-center justify-center border-2 mt-3">
+                <span class="text-gray-400">${isFA?'نتیجه اینجا':'Result here'}</span>
+            </div>`;
+    } else {
+        c.innerHTML = `
+            <div class="flex gap-3">
+                <input type="number" id="gcd-a" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'عدد اول':'First'}" dir="ltr">
+                <input type="number" id="gcd-b" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'عدد دوم':'Second'}" dir="ltr">
+            </div>
+            <button onclick="calcGCDLCM();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg mt-3">${isFA?'محاسبه':'Calculate'}</button>
+            <div id="prop-result" class="glass-panel rounded-2xl p-4 text-center min-h-[80px] flex items-center justify-center border-2 mt-3">
+                <span class="text-gray-400">${isFA?'نتیجه':'Result'}</span>
+            </div>`;
+    }
+}
+
+function calcProps() {
+    const n = parseInt(document.getElementById('prop-num')?.value || '');
+    const r = document.getElementById('prop-result');
+    const isFA = currentLang === 'fa';
+    if (isNaN(n)||n<1) { r.innerHTML=`<span class="text-red-500">${isFA?'عدد مثبت وارد کنید':'Enter a positive number'}</span>`; return; }
+    const isPrime = n>1 && !Array.from({length:n-2},(_,i)=>i+2).some(i=>n%i===0);
+    const isEven = n%2 === 0;
+    const factors = [];
+    for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
+    const digits = String(n).split('').map(Number);
+    const digitSum = digits.reduce((a,b)=>a+b,0);
+    const isDivisibleBy3 = digitSum%3===0;
+    r.innerHTML=`
+        <div class="grid grid-cols-2 gap-3 w-full">
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${isFA?'نوع':'Type'}</span><span class="font-bold ${isPrime?'text-green-600 dark:text-green-400':'text-blue-600 dark:text-blue-400'}">${isPrime?(isFA?'اول':'Prime'):(isFA?'مرکب':'Composite')}</span></div>
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${isFA?'زوج/فرد':'Parity'}</span><span class="font-bold">${isEven?(isFA?'زوج':'Even'):(isFA?'فرد':'Odd')}</span></div>
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${isFA?'مجموع ارقام':'Digit sum'}</span><span class="font-mono font-bold">${digitSum}</span></div>
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${isFA?'مجذور':'Square root'}</span><span class="font-mono font-bold">${Math.sqrt(n).toFixed(4)}</span></div>
+        </div>
+        <div class="mt-3 w-full text-xs text-gray-500"><span class="font-bold">${isFA?'مقسوم‌علیه‌ها:':'Divisors:'}</span> <span dir="ltr">${factors.join(', ')}</span></div>
+    `;
+}
+
+function calcGCDLCM() {
+    const a=parseInt(document.getElementById('gcd-a')?.value||0);
+    const b=parseInt(document.getElementById('gcd-b')?.value||0);
+    const r=document.getElementById('prop-result');
+    const isFA=currentLang==='fa';
+    if(!a||!b||a<1||b<1){r.innerHTML=`<span class="text-red-500">${isFA?'دو عدد مثبت وارد کنید':'Enter two positive numbers'}</span>`;return;}
+    const g=gcd(a,b), l=Math.abs(a*b)/g;
+    r.innerHTML=`<div class="flex flex-col gap-3 w-full"><div class="result-item flex-row justify-between"><span class="text-sm font-bold text-gray-600 dark:text-gray-300">${isFA?'ب.م.م (GCD)':'GCD'}</span><span class="text-2xl font-mono font-bold text-green-600 dark:text-green-400">${g}</span></div><div class="result-item flex-row justify-between"><span class="text-sm font-bold text-gray-600 dark:text-gray-300">${isFA?'ک.م.م (LCM)':'LCM'}</span><span class="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">${l}</span></div></div>`;
+}
+
+// =============================================
+// SIEVE
+// =============================================
+function renderSieve() {
+    const isFA = currentLang === 'fa';
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'غربال اراتوستن':'Sieve of Eratosthenes'}</h3>
+            <div class="glass-panel p-4 rounded-2xl flex gap-3 border-2">
+                <input type="number" id="sieve-start" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'از':'From'}" dir="ltr" min="1">
+                <span class="self-center text-xl font-bold text-gray-500">—</span>
+                <input type="number" id="sieve-end" class="glass-input flex-1 h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'تا':'To'}" dir="ltr" max="10000">
+            </div>
+            <button onclick="calcSieve();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'غربالگری':'Run Sieve'}</button>
+            <div id="sieve-result" class="glass-panel rounded-2xl p-4 min-h-[100px] border-2 flex flex-col gap-2">
+                <span class="text-center text-gray-400 self-center">${isFA?'نتیجه اینجا':'Result here'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function calcSieve() {
+    const s=parseInt(document.getElementById('sieve-start').value);
+    const e=parseInt(document.getElementById('sieve-end').value);
+    const box=document.getElementById('sieve-result');
+    const isFA=currentLang==='fa';
+    if(isNaN(s)||isNaN(e)){box.innerHTML=`<span class="text-red-500 text-center">${isFA?'محدوده را وارد کنید':'Enter range'}</span>`;return;}
+    if(s>e){box.innerHTML=`<span class="text-red-500 text-center">${isFA?'شروع باید کوچکتر باشد':'Start must be less'}</span>`;return;}
+    if(e>10000){box.innerHTML=`<span class="text-red-500 text-center">${isFA?'حداکثر ۱۰,۰۰۰':'Max 10,000'}</span>`;return;}
+    const isPrime=new Array(e+1).fill(true);
+    isPrime[0]=isPrime[1]=false;
+    for(let i=2;i*i<=e;i++){if(isPrime[i]){for(let j=i*i;j<=e;j+=i)isPrime[j]=false;}}
+    const primes=[],composites=[];
+    for(let i=s;i<=e;i++){if(isPrime[i])primes.push(i);else if(i>1)composites.push(i);}
+    box.innerHTML=`
+        <div class="flex flex-col gap-3">
+            <div><div class="text-green-700 dark:text-green-400 font-bold mb-1">${isFA?'اعداد اول':'Primes'} (${primes.length})</div><div class="text-sm font-mono text-gray-800 dark:text-gray-200 leading-relaxed break-words bg-green-50/50 dark:bg-green-900/20 p-3 rounded-xl" dir="ltr">${primes.length>0?primes.join(', '):(isFA?'موردی نیست':'None')}</div></div>
+            <div><div class="text-blue-700 dark:text-blue-400 font-bold mb-1">${isFA?'اعداد مرکب':'Composites'} (${composites.length})</div><div class="text-sm font-mono text-gray-800 dark:text-gray-200 leading-relaxed break-words bg-blue-50/50 dark:bg-blue-900/20 p-3 rounded-xl" dir="ltr">${composites.length>0?composites.join(', '):(isFA?'موردی نیست':'None')}</div></div>
+        </div>`;
+}
+
+// =============================================
+// METALS
+// =============================================
+function renderMetals() {
+    const isFA = currentLang === 'fa';
+    const names = isFA ? metalNames : metalNamesEn;
+    let opts = '';
+    for (const [k,n] of Object.entries(names)) opts += `<option value="${k}">${n}</option>`;
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'محاسبه‌گر وزن فلزات':'Metal Weight Calculator'}</h3>
+            <select id="metal-select" class="glass-input w-full h-12 rounded-xl text-center">${opts}</select>
+            <div class="glass-panel p-4 rounded-2xl border-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-center">${isFA?'ابعاد (سانتی‌متر)':'Dimensions (cm)'}</label>
+                <div class="flex gap-3">
+                    <input type="number" id="metal-l" class="glass-input flex-1 h-12 rounded-xl text-center" placeholder="${isFA?'طول':'Length'}" dir="ltr" step="0.01">
+                    <input type="number" id="metal-w" class="glass-input flex-1 h-12 rounded-xl text-center" placeholder="${isFA?'عرض':'Width'}" dir="ltr" step="0.01">
+                    <input type="number" id="metal-h" class="glass-input flex-1 h-12 rounded-xl text-center" placeholder="${isFA?'ارتفاع':'Height'}" dir="ltr" step="0.01">
+                </div>
+            </div>
+            <button onclick="calculateMetalWeight();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-14 rounded-2xl font-bold text-lg shadow-lg">${isFA?'محاسبه وزن':'Calculate Weight'}</button>
+            <div id="metal-result" class="glass-panel rounded-2xl p-5 text-center min-h-[90px] flex items-center justify-center border-2">
+                <span class="text-gray-400">${isFA?'نتیجه':'Result'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function calculateMetalWeight() {
+    const metal=document.getElementById('metal-select').value;
+    const l=parseFloat(document.getElementById('metal-l').value);
+    const w=parseFloat(document.getElementById('metal-w').value);
+    const h=parseFloat(document.getElementById('metal-h').value);
+    const r=document.getElementById('metal-result');
+    const isFA=currentLang==='fa';
+    if(isNaN(l)||isNaN(w)||isNaN(h)||l<=0||w<=0||h<=0){r.innerHTML=`<span class="text-red-500">${isFA?'تمام ابعاد را وارد کنید':'Enter all dimensions'}</span>`;return;}
+    const vol=l*w*h;
+    const den=metalDensities[metal];
+    const wg=vol*den;
+    const wk=wg/1000;
+    const name=isFA?metalNames[metal]:metalNamesEn[metal];
+    r.innerHTML=`<div class="flex flex-col gap-2 w-full">
+        <div class="text-xl font-bold text-indigo-700 dark:text-indigo-400">${name}</div>
+        <div class="flex justify-between items-center text-sm"><span class="text-gray-500">${isFA?'حجم:':'Volume:'}</span><span class="font-mono font-bold" dir="ltr">${vol.toFixed(2)} cm³</span></div>
+        <div class="flex justify-between items-center text-sm"><span class="text-gray-500">${isFA?'چگالی:':'Density:'}</span><span class="font-mono font-bold" dir="ltr">${den} g/cm³</span></div>
+        <div class="h-px bg-gray-200 dark:bg-gray-700"></div>
+        <div class="flex justify-between items-center"><span class="font-bold text-gray-800 dark:text-white">${isFA?'وزن:':'Weight:'}</span><span class="text-2xl font-mono font-bold text-blue-700 dark:text-blue-400" dir="ltr">${wg.toFixed(2)} ${isFA?'گرم':'g'}</span></div>
+        <div class="flex justify-between items-center text-sm"><span class="text-gray-500">${isFA?'معادل:':'Equivalent:'}</span><span class="font-mono font-bold" dir="ltr">${wk.toFixed(4)} kg</span></div>
+    </div>`;
+}
+
+// =============================================
+// GEOMETRY
+// =============================================
+function renderGeometry() {
+    const isFA = currentLang === 'fa';
+    const shapes = t('geomShapes');
+    const shapeKeys = ['square','rect','circle','triangle','trapezoid'];
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'هندسه: مساحت و محیط':'Geometry: Area & Perimeter'}</h3>
+            <div class="flex flex-wrap gap-2 justify-center">
+                ${shapes.map((s,i)=>`<button class="shape-btn ${i===0?'active':''}" id="shape-${shapeKeys[i]}" onclick="selectShape('${shapeKeys[i]}')">${s}</button>`).join('')}
+            </div>
+            <div id="geom-inputs" class="glass-panel p-4 rounded-2xl border-2 flex flex-col gap-3"></div>
+            <button onclick="calcGeometry();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq w-full h-12 rounded-2xl font-bold text-lg shadow-lg">${t('geomCalc')}</button>
+            <div id="geom-result" class="glass-panel rounded-2xl p-5 text-center min-h-[80px] flex items-center justify-center border-2">
+                <span class="text-gray-400">${isFA?'نتیجه':'Result'}</span>
+            </div>
+        </div>
+    `;
+    currentGeomShape = 'square';
+    renderGeomInputs();
+}
+
+function selectShape(shape) {
+    currentGeomShape = shape;
+    ['square','rect','circle','triangle','trapezoid'].forEach(s => {
+        const el = document.getElementById('shape-'+s);
+        if (el) el.classList.toggle('active', s===shape);
+    });
+    renderGeomInputs();
+}
+
+function renderGeomInputs() {
+    const c = document.getElementById('geom-inputs');
+    const isFA = currentLang === 'fa';
+    const inputs = {
+        square: [{ id:'gs-a', ph: isFA?'ضلع (a)':'Side (a)' }],
+        rect: [{ id:'gs-a', ph: isFA?'طول (a)':'Length (a)' },{ id:'gs-b', ph: isFA?'عرض (b)':'Width (b)' }],
+        circle: [{ id:'gs-r', ph: isFA?'شعاع (r)':'Radius (r)' }],
+        triangle: [{ id:'gs-a', ph: isFA?'قاعده (a)':'Base (a)' },{ id:'gs-h', ph: isFA?'ارتفاع (h)':'Height (h)' },{ id:'gs-b', ph: isFA?'ضلع b':'Side b' },{ id:'gs-c', ph: isFA?'ضلع c':'Side c' }],
+        trapezoid: [{ id:'gs-a', ph: isFA?'قاعده بزرگ (a)':'Large base (a)' },{ id:'gs-b', ph: isFA?'قاعده کوچک (b)':'Small base (b)' },{ id:'gs-h', ph: isFA?'ارتفاع (h)':'Height (h)' },{ id:'gs-c', ph: isFA?'ضلع (c)':'Side (c)' },{ id:'gs-d', ph: isFA?'ضلع (d)':'Side (d)' }]
+    };
+    const fields = inputs[currentGeomShape] || [];
+    c.innerHTML = fields.map(f=>`<input type="number" id="${f.id}" class="glass-input w-full h-12 rounded-xl text-center font-mono text-lg" placeholder="${f.ph}" dir="ltr" min="0" step="0.01">`).join('');
+}
+
+function calcGeometry() {
+    const g = id => parseFloat(document.getElementById(id)?.value || '');
+    const r = document.getElementById('geom-result');
+    const isFA = currentLang === 'fa';
+    let area = 0, perimeter = 0;
+    try {
+        if (currentGeomShape === 'square') {
+            const a = g('gs-a');
+            if (isNaN(a)||a<=0) throw new Error();
+            area = a*a; perimeter = 4*a;
+        } else if (currentGeomShape === 'rect') {
+            const a=g('gs-a'),b=g('gs-b');
+            if (isNaN(a)||isNaN(b)||a<=0||b<=0) throw new Error();
+            area = a*b; perimeter = 2*(a+b);
+        } else if (currentGeomShape === 'circle') {
+            const rad=g('gs-r');
+            if (isNaN(rad)||rad<=0) throw new Error();
+            area = Math.PI*rad*rad; perimeter = 2*Math.PI*rad;
+        } else if (currentGeomShape === 'triangle') {
+            const a=g('gs-a'),h=g('gs-h'),b=g('gs-b'),c=g('gs-c');
+            if (isNaN(a)||isNaN(h)||a<=0||h<=0) throw new Error();
+            area = 0.5*a*h;
+            perimeter = isNaN(b)||isNaN(c)||b<=0||c<=0 ? NaN : a+b+c;
+        } else if (currentGeomShape === 'trapezoid') {
+            const a=g('gs-a'),b=g('gs-b'),h=g('gs-h'),c=g('gs-c'),d=g('gs-d');
+            if (isNaN(a)||isNaN(b)||isNaN(h)||a<=0||b<=0||h<=0) throw new Error();
+            area = 0.5*(a+b)*h;
+            perimeter = isNaN(c)||isNaN(d)||c<=0||d<=0 ? NaN : a+b+c+d;
+        }
+        r.innerHTML = `<div class="grid grid-cols-2 gap-4 w-full">
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${t('geomArea')}</span><span class="text-2xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">${area.toFixed(4)}</span></div>
+            <div class="result-item"><span class="text-xs text-gray-500 mb-1">${t('geomPerimeter')}</span><span class="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400" dir="ltr">${isNaN(perimeter)?(isFA?'ناقص':'Incomplete'):perimeter.toFixed(4)}</span></div>
+        </div>`;
+    } catch(e) { r.innerHTML=`<span class="text-red-500">${isFA?'مقادیر را درست وارد کنید':'Enter valid values'}</span>`; }
+}
+
+// =============================================
+// CURRENCY
+// =============================================
+const currencyList = [
+    {code:'USD',flag:'🇺🇸',name:'دلار'}, {code:'EUR',flag:'🇪🇺',name:'یورو'},
+    {code:'GBP',flag:'🇬🇧',name:'پوند'}, {code:'IRR',flag:'🇮🇷',name:'ریال ایران'},
+    {code:'TRY',flag:'🇹🇷',name:'لیر ترکیه'}, {code:'AED',flag:'🇦🇪',name:'درهم'},
+    {code:'CAD',flag:'🇨🇦',name:'دلار کانادا'}, {code:'JPY',flag:'🇯🇵',name:'ین ژاپن'},
+    {code:'CNY',flag:'🇨🇳',name:'یوان چین'}, {code:'CHF',flag:'🇨🇭',name:'فرانک سوئیس'},
+    {code:'AUD',flag:'🇦🇺',name:'دلار استرالیا'}, {code:'SAR',flag:'🇸🇦',name:'ریال عربستان'},
+];
+const currencyListEn = [
+    {code:'USD',flag:'🇺🇸',name:'US Dollar'}, {code:'EUR',flag:'🇪🇺',name:'Euro'},
+    {code:'GBP',flag:'🇬🇧',name:'British Pound'}, {code:'IRR',flag:'🇮🇷',name:'Iranian Rial'},
+    {code:'TRY',flag:'🇹🇷',name:'Turkish Lira'}, {code:'AED',flag:'🇦🇪',name:'UAE Dirham'},
+    {code:'CAD',flag:'🇨🇦',name:'Canadian Dollar'}, {code:'JPY',flag:'🇯🇵',name:'Japanese Yen'},
+    {code:'CNY',flag:'🇨🇳',name:'Chinese Yuan'}, {code:'CHF',flag:'🇨🇭',name:'Swiss Franc'},
+    {code:'AUD',flag:'🇦🇺',name:'Australian Dollar'}, {code:'SAR',flag:'🇸🇦',name:'Saudi Riyal'},
+];
+
+function renderCurrency() {
+    const isFA = currentLang === 'fa';
+    const list = isFA ? currencyList : currencyListEn;
+    const makeOptions = list.map(c=>`<option value="${c.code}">${c.flag} ${c.name} (${c.code})</option>`).join('');
+    document.getElementById('app-content').innerHTML = `
+        <div class="flex flex-col gap-4 pt-2">
+            <h3 class="text-gray-700 dark:text-gray-300 font-bold text-lg text-center">${isFA?'تبدیل ارز':'Currency Converter'}</h3>
+            <div class="glass-panel p-4 rounded-2xl border-2 flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">${isFA?'از:':'From:'}</label>
+                        <select id="curr-from" class="glass-input w-full h-11 rounded-xl text-sm" onchange="currentCurrencyFrom=this.value">${makeOptions}</select>
+                    </div>
+                    <div class="flex items-end pb-1"><button onclick="swapCurrencies()" class="btn-bubble btn-func w-10 h-10 rounded-full flex items-center justify-center text-lg" title="Swap">⇄</button></div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">${isFA?'به:':'To:'}</label>
+                        <select id="curr-to" class="glass-input w-full h-11 rounded-xl text-sm" onchange="currentCurrencyTo=this.value">${makeOptions}</select>
+                    </div>
+                </div>
+                <input type="number" id="curr-amount" class="glass-input w-full h-12 rounded-xl text-center font-mono text-lg" placeholder="${isFA?'مقدار':'Amount'}" dir="ltr" value="1" min="0">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="fetchCurrencyRates()" id="curr-fetch-btn" class="btn-bubble flex-1 h-12 rounded-2xl font-bold text-sm" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);color:var(--accent);">${t('currencyUpdateBtn')}</button>
+                <button onclick="convertCurrency();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq flex-1 h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'تبدیل':'Convert'}</button>
+            </div>
+            <div id="curr-status" class="text-center text-xs text-gray-400"></div>
+            <div id="curr-result" class="glass-panel rounded-2xl p-5 text-center min-h-[80px] flex items-center justify-center border-2">
+                <span class="text-gray-400">${isFA?'نتیجه':'Result'}</span>
+            </div>
+        </div>
+    `;
+    // Set initial values
+    document.getElementById('curr-from').value = currentCurrencyFrom || 'USD';
+    document.getElementById('curr-to').value = currentCurrencyTo || 'IRR';
+}
+
+function swapCurrencies() {
+    const from = document.getElementById('curr-from');
+    const to = document.getElementById('curr-to');
+    if (!from || !to) return;
+    const tmp = from.value;
+    from.value = to.value;
+    to.value = tmp;
+    currentCurrencyFrom = from.value;
+    currentCurrencyTo = to.value;
+    playClick('op');
+}
+
+async function fetchCurrencyRates() {
+    const btn = document.getElementById('curr-fetch-btn');
+    const status = document.getElementById('curr-status');
+    if (btn) btn.textContent = t('currencyLoading');
+    if (status) status.textContent = '';
+    try {
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (!res.ok) throw new Error('Network response not ok');
+        const data = await res.json();
+        if (data && data.rates) {
+            currencyRates = data.rates;
+            currencyLoaded = true;
+            if (btn) btn.textContent = currentLang==='fa'?'✓ به‌روز شد':'✓ Updated';
+            if (status) status.textContent = currentLang==='fa'?'نرخ‌ها با موفقیت دریافت شد':'Rates fetched successfully';
+            showToast(currentLang==='fa'?'نرخ ارز به‌روز شد':'Currency rates updated');
+        } else throw new Error('Invalid data');
+    } catch(e) {
+        if (btn) btn.textContent = t('currencyUpdateBtn');
+        if (status) status.textContent = t('currencyError');
+        // Use hardcoded approximate rates as fallback
+        currencyRates = { USD:1,EUR:0.92,GBP:0.79,IRR:42000,TRY:32,AED:3.67,CAD:1.36,JPY:149,CNY:7.24,CHF:0.89,AUD:1.53,SAR:3.75 };
+        currencyLoaded = true;
+        showToast(currentLang==='fa'?'نرخ تقریبی استفاده شد':'Using approximate rates');
+    }
+}
+
+function convertCurrency() {
+    if (!currencyLoaded) { fetchCurrencyRates().then(convertCurrency); return; }
+    const from = document.getElementById('curr-from')?.value || 'USD';
+    const to = document.getElementById('curr-to')?.value || 'IRR';
+    const amount = parseFloat(document.getElementById('curr-amount')?.value || 1);
+    const r = document.getElementById('curr-result');
+    const isFA = currentLang === 'fa';
+    if (isNaN(amount)||amount<0) { r.innerHTML=`<span class="text-red-500">${isFA?'مقدار را وارد کنید':'Enter amount'}</span>`; return; }
+    if (!currencyRates[from]||!currencyRates[to]) { r.innerHTML=`<span class="text-red-500">${isFA?'نرخ‌ها را دریافت کنید':'Fetch rates first'}</span>`; return; }
+    const amountInUSD = amount / currencyRates[from];
+    const result = amountInUSD * currencyRates[to];
+    const list = isFA ? currencyList : currencyListEn;
+    const fromInfo = list.find(c=>c.code===from)||{flag:'',name:from};
+    const toInfo = list.find(c=>c.code===to)||{flag:'',name:to};
+    r.innerHTML = `
+        <div class="flex flex-col items-center gap-3 w-full">
+            <div class="text-sm text-gray-500 dark:text-gray-400" dir="ltr">${amount.toLocaleString()} ${fromInfo.flag} ${from}</div>
+            <div class="text-4xl font-mono font-black text-green-600 dark:text-green-400" dir="ltr">${result.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+            <div class="text-sm font-bold text-gray-600 dark:text-gray-300">${toInfo.flag} ${toInfo.name} (${to})</div>
+            <div class="text-xs text-gray-400" dir="ltr">1 ${from} = ${(currencyRates[to]/currencyRates[from]).toFixed(4)} ${to}</div>
+        </div>`;
+}
+
+// =============================================
+// HISTORY
+// =============================================
+function renderHistoryList() {
+    const list = document.getElementById('history-list');
+    const isFA = currentLang === 'fa';
+    if (!calcHistory.length) { list.innerHTML=`<div class="text-center text-gray-500 py-4">${t('noHistory')}</div>`; return; }
+    list.innerHTML = calcHistory.map(item=>`
+        <div class="glass-panel p-3 rounded-2xl mb-2 flex flex-col items-end border-2 cursor-pointer hover:bg-white/90 dark:hover:bg-white/10 transition-colors" onclick="copyToClipboard('${item.res}')" title="${isFA?'کپی':'Copy'}">
+            <span class="text-xs text-gray-500 font-mono dark:text-gray-400" dir="ltr">${item.exp}</span>
+            <span class="text-xl font-bold text-gray-800 font-mono dark:text-white" dir="ltr">= ${item.res}</span>
+        </div>`).join('');
+}
+function clearHistory() { calcHistory = []; renderHistoryList(); }
+
+// =============================================
+// POWER & CONVERT
+// =============================================
+function setPowerConvertMode(mode) {
+    powerConvertMode=mode;
+    ['power','convert'].forEach(m=>{
+        const el=document.getElementById(`btn-pc-${m}`);
+        if(el) el.className=m===mode?"flex-1 py-2 rounded-full text-xs font-semibold bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm transition-all":"flex-1 py-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-white/50 transition-all";
+    });
+    if(mode==='power') renderPowerCalculator(); else renderUnitConverter();
+}
+
+function renderPowerCalculator() {
+    const isFA=currentLang==='fa';
+    document.getElementById('power-convert-content').innerHTML=`
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300" dir="ltr">x<sup>y</sup></label>
+                <div class="flex gap-2">
+                    <input type="number" id="pw-base" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="x" dir="ltr">
+                    <input type="number" id="pw-exp" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="y" dir="ltr">
+                </div>
+                <button onclick="calcPower();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'محاسبه':'Calculate'}</button>
+                <div id="pw-result" class="glass-panel rounded-xl p-4 text-center">---</div>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">${isFA?'ریشه n ام:':'n-th Root:'}</label>
+                <div class="flex gap-2">
+                    <input type="number" id="rt-num" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="${isFA?'عدد':'Number'}" dir="ltr">
+                    <input type="number" id="rt-root" class="glass-input flex-1 h-12 rounded-xl text-center font-mono" placeholder="n" dir="ltr" value="2">
+                </div>
+                <button onclick="calcRoot();playClick('eq');ledBtn(this)" class="btn-bubble btn-func h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'محاسبه ریشه':'Calculate Root'}</button>
+                <div id="rt-result" class="glass-panel rounded-xl p-4 text-center">---</div>
+            </div>
+        </div>`;
+}
+
+function calcPower() {
+    const b=parseFloat(document.getElementById('pw-base')?.value||0);
+    const e=parseFloat(document.getElementById('pw-exp')?.value||0);
+    const r=document.getElementById('pw-result');
+    const result=Math.pow(b,e);
+    r.innerHTML=`<span class="text-2xl font-mono font-bold text-indigo-700 dark:text-indigo-400" dir="ltr">${b}<sup>${e}</sup> = ${result.toLocaleString()}</span>`;
+}
+
+function calcRoot() {
+    const n=parseFloat(document.getElementById('rt-num')?.value||0);
+    const rt=parseFloat(document.getElementById('rt-root')?.value||2);
+    const r=document.getElementById('rt-result');
+    if(n<0&&rt%2===0){r.innerHTML=`<span class="text-red-500">${currentLang==='fa'?'ریشه زوج عدد منفی ممکن نیست':'Even root of negative number'}</span>`;return;}
+    const res=Math.pow(Math.abs(n),1/rt)*(n<0?-1:1);
+    r.innerHTML=`<span class="text-2xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">${rt}√${n} = ${res.toFixed(6).replace(/\.?0+$/, '')}</span>`;
+}
+
+function renderUnitConverter() {
+    const isFA=currentLang==='fa';
+    const cats = isFA ? ['طول','جرم','دما','سرعت','مساحت'] : ['Length','Mass','Temperature','Speed','Area'];
+    const catKeys = ['length','mass','temp','speed','area'];
+    document.getElementById('power-convert-content').innerHTML=`
+        <div class="flex flex-col gap-4">
+            <select id="conv-cat" class="glass-input w-full h-12 rounded-xl text-center" onchange="updateConvOptions()">
+                ${cats.map((c,i)=>`<option value="${catKeys[i]}">${c}</option>`).join('')}
+            </select>
+            <div class="flex gap-2">
+                <select id="conv-from" class="glass-input flex-1 h-12 rounded-xl text-center text-sm"></select>
+                <select id="conv-to" class="glass-input flex-1 h-12 rounded-xl text-center text-sm"></select>
+            </div>
+            <input type="number" id="conv-val" class="glass-input w-full h-12 rounded-xl text-center text-lg font-mono" placeholder="${isFA?'مقدار':'Value'}" dir="ltr">
+            <button onclick="doConvert();playClick('eq');ledBtn(this)" class="btn-bubble btn-eq h-12 rounded-2xl font-bold text-lg shadow-lg">${isFA?'تبدیل':'Convert'}</button>
+            <div id="conv-result" class="glass-panel rounded-xl p-4 text-center">---</div>
+        </div>`;
+    updateConvOptions();
+}
+
+const convUnits = {
+    length: ['m','km','cm','mm','mi','ft','in','yd'],
+    mass: ['kg','g','mg','lb','oz','ton'],
+    temp: ['°C','°F','K'],
+    speed: ['m/s','km/h','mph','knot'],
+    area: ['m²','km²','cm²','mm²','ft²','acre','ha'],
+};
+
+function updateConvOptions() {
+    const cat = document.getElementById('conv-cat')?.value || 'length';
+    const units = convUnits[cat] || [];
+    const fromEl = document.getElementById('conv-from');
+    const toEl = document.getElementById('conv-to');
+    if (!fromEl || !toEl) return;
+    const opts = units.map(u=>`<option value="${u}">${u}</option>`).join('');
+    fromEl.innerHTML = opts; toEl.innerHTML = opts;
+    if (units[1]) toEl.value = units[1];
+}
+
+function doConvert() {
+    const cat = document.getElementById('conv-cat')?.value || 'length';
+    const from = document.getElementById('conv-from')?.value;
+    const to = document.getElementById('conv-to')?.value;
+    const val = parseFloat(document.getElementById('conv-val')?.value || 0);
+    const r = document.getElementById('conv-result');
+    if (isNaN(val)) { r.innerHTML='<span class="text-red-500">Invalid</span>'; return; }
+    let result;
+    try {
+        if (cat === 'temp') {
+            if (from==='°C'&&to==='°F') result=val*9/5+32;
+            else if (from==='°F'&&to==='°C') result=(val-32)*5/9;
+            else if (from==='°C'&&to==='K') result=val+273.15;
+            else if (from==='K'&&to==='°C') result=val-273.15;
+            else if (from==='°F'&&to==='K') result=(val-32)*5/9+273.15;
+            else if (from==='K'&&to==='°F') result=(val-273.15)*9/5+32;
+            else result=val;
+        } else {
+            const baseConv = {
+                length:{'m':1,'km':0.001,'cm':100,'mm':1000,'mi':0.000621371,'ft':3.28084,'in':39.3701,'yd':1.09361},
+                mass:{'kg':1,'g':1000,'mg':1e6,'lb':2.20462,'oz':35.274,'ton':0.001},
+                speed:{'m/s':1,'km/h':3.6,'mph':2.23694,'knot':1.94384},
+                area:{'m²':1,'km²':1e-6,'cm²':10000,'mm²':1e6,'ft²':10.7639,'acre':0.000247105,'ha':0.0001},
+            };
+            const conv = baseConv[cat] || {};
+            const inBase = val / (conv[from]||1);
+            result = inBase * (conv[to]||1);
+        }
+        r.innerHTML=`<span class="text-2xl font-mono font-bold text-green-600 dark:text-green-400" dir="ltr">${result.toFixed(6).replace(/\.?0+$/, '')} ${to}</span>`;
+    } catch(e) { r.innerHTML='<span class="text-red-500">Error</span>'; }
+}
+
+// =============================================
+// BMI
+// =============================================
+function calcBMI() {
+    const h=parseFloat(document.getElementById('bmi-height').value);
+    const w=parseFloat(document.getElementById('bmi-weight').value);
+    const r=document.getElementById('bmi-result');
+    const isFA=currentLang==='fa';
+    if(isNaN(h)||isNaN(w)||h<=0||w<=0){r.innerHTML=`<span class="text-red-500">${isFA?'مقادیر را وارد کنید':'Enter values'}</span>`;return;}
+    const hm=h/100, bmi=w/(hm*hm);
+    const ideal_min=18.5*hm*hm, ideal_max=24.9*hm*hm;
+    let status,color,diff;
+    if(bmi<18.5){status=isFA?'کمبود وزن':'Underweight';color='text-blue-600 dark:text-blue-400';diff=`<div class="text-sm text-blue-600 mt-2">${(ideal_min-w).toFixed(1)} ${isFA?'کیلو کمبود وزن':'kg underweight'}</div>`;}
+    else if(bmi<25){status=isFA?'وزن سالم':'Normal';color='text-green-600 dark:text-green-400';diff=`<div class="text-sm text-green-600 mt-2">${isFA?'وزن شما در محدوده سالم':'Weight is in healthy range'} ✓</div>`;}
+    else if(bmi<30){status=isFA?'اضافه وزن':'Overweight';color='text-orange-600 dark:text-orange-400';diff=`<div class="text-sm text-orange-600 mt-2">${(w-ideal_max).toFixed(1)} ${isFA?'کیلو اضافه وزن':'kg overweight'}</div>`;}
+    else{status=isFA?'چاق':'Obese';color='text-red-600 dark:text-red-400';diff=`<div class="text-sm text-red-600 mt-2">${(w-ideal_max).toFixed(1)} ${isFA?'کیلو اضافه وزن':'kg overweight'}</div>`;}
+    r.innerHTML=`<div class="text-4xl font-black mb-1" dir="ltr">${bmi.toFixed(1)}</div><div class="text-lg font-bold ${color}">${status}</div>${diff}<div class="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-300/30" dir="ltr">${isFA?'وزن ایده‌آل:':'Ideal weight:'} ${ideal_min.toFixed(1)} - ${ideal_max.toFixed(1)} kg</div>`;
+}
+
+// =============================================
+// NOTEPAD (WHITE CANVAS)
+// =============================================
+function initNotepad() {
+    npCanvas = document.getElementById('notepad-canvas');
+    if (!npCanvas) return;
+    npCtx = npCanvas.getContext('2d');
+
+    npCanvas.addEventListener('mousedown', npStartDraw);
+    npCanvas.addEventListener('mousemove', npDraw);
+    npCanvas.addEventListener('mouseup', npStopDraw);
+    npCanvas.addEventListener('mouseout', npStopDraw);
+    npCanvas.addEventListener('touchstart', npTouchStart, { passive: false });
+    npCanvas.addEventListener('touchmove', npTouchMove, { passive: false });
+    npCanvas.addEventListener('touchend', npStopDraw);
+}
+
+function openNotepad() {
+    closeDrawer();
+    const panel = document.getElementById('notepad-panel');
+    
+    // Setup colors and tools
+    const colors = ['#000000','#ef4444','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1','#ffffff'];
+    const isFA = currentLang === 'fa';
+    
+    document.getElementById('notepad-title-text').textContent = t('notepadTitle');
+    
+    // Apply background style
+    if (isDarkMode) {
+        panel.style.background = '#111827';
+        document.getElementById('notepad-title-bar').style.background = 'rgba(17,24,39,0.95)';
+    } else {
+        panel.style.background = '#fff';
+        document.getElementById('notepad-title-bar').style.background = 'rgba(255,255,255,0.98)';
+    }
+    
+    document.getElementById('notepad-title-bar').style.color = isDarkMode ? '#e2e8f0' : '#1a1a2e';
+    
+    const toolbar = document.getElementById('notepad-toolbar');
+    toolbar.innerHTML = `
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;">
+            ${colors.map(c=>`<button class="np-color-btn ${c==='#000000'?'active':''}" style="background:${c};${c==='#ffffff'?'border:2px solid #ddd;':''}" data-color="${c}" onclick="npSetColor('${c}',this)"></button>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;justify-content:center;">
+            <button class="np-tool-btn active-tool" id="np-pen-btn" onclick="npSetTool('pen',this)">${isFA?'🖊 قلم':'🖊 Pen'}</button>
+            <button class="np-tool-btn" id="np-marker-btn" onclick="npSetTool('marker',this)">${isFA?'🖌 مارکر':'🖌 Marker'}</button>
+            <button class="np-tool-btn" id="np-eraser-btn" onclick="npSetTool('eraser',this)">${isFA?'⬜ پاک‌کن':'⬜ Eraser'}</button>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.06);padding:6px 12px;border-radius:20px;">
+                <span style="font-size:0.8rem;font-weight:600;color:#666;">${isFA?'اندازه':'Size'}</span>
+                <input type="range" id="np-size" min="1" max="20" value="4" style="width:70px;" oninput="npSetSize(this.value)">
+                <span id="np-size-label" style="font-size:0.8rem;font-weight:bold;min-width:20px;">4</span>
+            </div>
+            <button class="np-tool-btn" onclick="npClear()">${isFA?'🗑 پاک همه':'🗑 Clear all'}</button>
+            <button class="np-tool-btn" onclick="npUndo()">${isFA?'↩ برگشت':'↩ Undo'}</button>
+            <button class="np-tool-btn" onclick="npSave()">${isFA?'💾 ذخیره':'💾 Save'}</button>
+        </div>
+    `;
+    
+    openFullscreen('notepad-panel');
+    
+    setTimeout(() => {
+        const container = npCanvas.parentElement;
+        npCanvas.width = container.clientWidth;
+        npCanvas.height = container.clientHeight;
+        npLoadSaved();
+    }, 100);
+}
+
+function npSetColor(color, btn) {
+    npColor = color;
+    npIsEraser = false;
+    npCurrentTool = 'pen';
+    document.querySelectorAll('.np-color-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.np-tool-btn').forEach(b => b.classList.remove('active-tool'));
+    document.getElementById('np-pen-btn')?.classList.add('active-tool');
+}
+
+function npSetTool(tool, btn) {
+    npCurrentTool = tool;
+    npIsEraser = tool === 'eraser';
+    document.querySelectorAll('.np-tool-btn').forEach(b => b.classList.remove('active-tool'));
+    btn.classList.add('active-tool');
+}
+
+function npSetSize(val) {
+    npBrushSize = parseInt(val);
+    const lbl = document.getElementById('np-size-label');
+    if (lbl) lbl.textContent = val;
+}
+
+function npStartDraw(e) {
+    npIsDrawing = true;
+    const rect = npCanvas.getBoundingClientRect();
+    npLastX = e.clientX - rect.left;
+    npLastY = e.clientY - rect.top;
+    npHistory.push(npCtx.getImageData(0,0,npCanvas.width,npCanvas.height));
+    if (npHistory.length > 30) npHistory.shift();
+}
+
+function npDraw(e) {
+    if (!npIsDrawing) return;
+    const rect = npCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    npCtx.beginPath();
+    npCtx.moveTo(npLastX, npLastY);
+    npCtx.lineTo(x, y);
+    if (npIsEraser) {
+        npCtx.strokeStyle = isDarkMode ? '#111827' : '#ffffff';
+        npCtx.lineWidth = npBrushSize * 3;
+    } else if (npCurrentTool === 'marker') {
+        npCtx.strokeStyle = npColor + '88';
+        npCtx.lineWidth = npBrushSize * 3;
+    } else {
+        npCtx.strokeStyle = npColor;
+        npCtx.lineWidth = npBrushSize;
+    }
+    npCtx.lineCap = 'round'; npCtx.lineJoin = 'round';
+    npCtx.stroke();
+    npLastX = x; npLastY = y;
+}
+
+function npTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = npCanvas.getBoundingClientRect();
+    npIsDrawing = true;
+    npLastX = touch.clientX - rect.left; npLastY = touch.clientY - rect.top;
+    npHistory.push(npCtx.getImageData(0,0,npCanvas.width,npCanvas.height));
+    if (npHistory.length > 30) npHistory.shift();
+}
+
+function npTouchMove(e) {
+    e.preventDefault();
+    if (!npIsDrawing) return;
+    const touch = e.touches[0];
+    const rect = npCanvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left, y = touch.clientY - rect.top;
+    npCtx.beginPath(); npCtx.moveTo(npLastX, npLastY); npCtx.lineTo(x, y);
+    npCtx.strokeStyle = npIsEraser ? (isDarkMode?'#111827':'#ffffff') : (npCurrentTool==='marker'?npColor+'88':npColor);
+    npCtx.lineWidth = npIsEraser ? npBrushSize*3 : (npCurrentTool==='marker'?npBrushSize*3:npBrushSize);
+    npCtx.lineCap = 'round'; npCtx.lineJoin = 'round'; npCtx.stroke();
+    npLastX = x; npLastY = y;
+}
+
+function npStopDraw() {
+    if (npIsDrawing) { npIsDrawing = false; npAutoSave(); }
+}
+
+function npClear() {
+    npCtx.fillStyle = isDarkMode ? '#111827' : '#ffffff';
+    npCtx.fillRect(0,0,npCanvas.width,npCanvas.height);
+    npAutoSave();
+}
+
+function npUndo() {
+    if (npHistory.length > 0) {
+        npCtx.putImageData(npHistory.pop(), 0, 0);
+        npAutoSave();
+    }
+}
+
+function npSave() {
+    const link = document.createElement('a');
+    link.download = 'notepad.png';
+    link.href = npCanvas.toDataURL();
+    link.click();
+    showToast(currentLang==='fa'?'ذخیره شد':'Saved');
+}
+
+function npAutoSave() {
+    try {
+        const data = npCanvas.toDataURL('image/jpeg', 0.7);
+        localStorage.setItem('pc_notepad_data', data);
+    } catch(e) {}
+}
+
+function npLoadSaved() {
+    try {
+        const saved = localStorage.getItem('pc_notepad_data');
+        // Fill white first
+        npCtx.fillStyle = isDarkMode ? '#111827' : '#ffffff';
+        npCtx.fillRect(0, 0, npCanvas.width, npCanvas.height);
+        if (saved) {
+            const img = new Image();
+            img.onload = () => {
+                npCtx.drawImage(img, 0, 0, npCanvas.width, npCanvas.height);
+            };
+            img.src = saved;
+        }
+    } catch(e) {
+        npCtx.fillStyle = '#ffffff';
+        npCtx.fillRect(0, 0, npCanvas.width, npCanvas.height);
+    }
+}
+
+function closeNotepad() {
+    npAutoSave();
+    closeFullscreen('notepad-panel');
+}
+
+// =============================================
+// SUPPORT
+// =============================================
+function openAdminSupport() {
+    const questions = JSON.parse(localStorage.getItem('support_questions') || '[]');
+    const listContainer = document.getElementById('admin-questions-list');
+    if (!questions.length) { listContainer.innerHTML='<p class="text-center text-gray-500">سوالی ثبت نشده است</p>'; }
+    else {
+        listContainer.innerHTML = questions.map(q=>`
+            <div class="question-item ${q.answer?'answered':'pending'}">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-bold text-gray-600 dark:text-gray-300">${q.user}</span>
+                    <span class="text-xs font-bold ${q.answer?'text-green-600':'text-yellow-600'}">${q.answer?'پاسخ داده شده ✓':'منتظر پاسخ'}</span>
+                </div>
+                <p class="text-sm text-gray-800 dark:text-white mb-2 font-semibold">${q.question}</p>
+                ${q.answer?`<div class="text-xs text-gray-600 dark:text-gray-400 mt-2 pt-2 border-t border-gray-300/30"><strong>پاسخ:</strong> ${q.answer}</div>`:`<button onclick="answerQuestion(${q.id})" class="btn-bubble w-full mt-2 py-2 rounded-xl text-sm">پاسخ دادن</button>`}
+            </div>`).join('');
+    }
+    closeFullscreen('settings-panel');
+    setTimeout(() => openModal('admin-support-modal'), 300);
+}
+
+function openUserSupport() { loadUserQuestions(); openModal('user-support-modal'); }
+
+function loadUserQuestions() {
+    const questions = JSON.parse(localStorage.getItem('support_questions')||'[]');
+    const userQ = questions.filter(q=>q.user===`${userData.firstName} ${userData.lastName}`);
+    const el = document.getElementById('user-questions-list');
+    if (!el) return;
+    if (!userQ.length) { el.innerHTML='<p class="text-xs text-gray-500 text-center py-2">سوالی ثبت نشده است</p>'; return; }
+    el.innerHTML = userQ.map(q=>`
+        <div class="question-item ${q.answer?'answered':'pending'}">
+            <div class="flex justify-between mb-2"><span class="text-xs ${q.answer?'text-green-600':'text-yellow-600'} font-bold">${q.answer?'پاسخ داده شده ✓':'منتظر پاسخ...'}</span></div>
+            <p class="text-sm text-gray-800 dark:text-white font-semibold">${q.question}</p>
+            ${q.answer?`<div class="mt-2 pt-2 border-t border-gray-300/30"><p class="text-xs text-gray-600 dark:text-gray-400 mb-1 font-bold">پاسخ:</p><p class="text-sm text-gray-700 dark:text-gray-200">${q.answer}</p></div>`:''}
+        </div>`).join('');
+}
+
+function submitSupportQuestion() {
+    const q = document.getElementById('support-question')?.value.trim();
+    if (!q) { showToast(currentLang==='fa'?'سوال را بنویسید':'Write your question'); return; }
+    const questions = JSON.parse(localStorage.getItem('support_questions')||'[]');
+    questions.push({ id:Date.now(), user:`${userData.firstName} ${userData.lastName}`, question:q, answer:null, timestamp:new Date().toISOString() });
+    localStorage.setItem('support_questions', JSON.stringify(questions));
+    showToast(currentLang==='fa'?'سوال ثبت شد':'Question submitted');
+    document.getElementById('support-question').value = '';
+    loadUserQuestions();
+}
+
+function answerQuestion(qid) {
+    const questions = JSON.parse(localStorage.getItem('support_questions')||'[]');
+    const q = questions.find(x=>x.id===qid);
+    if (!q) return;
+    currentQuestionId = qid;
+    document.getElementById('question-text').innerText = q.question;
+    document.getElementById('question-user').innerText = `از: ${q.user}`;
+    document.getElementById('answer-text').value = '';
+    closeModal('admin-support-modal');
+    openModal('answer-modal');
+}
+
+function submitAnswer() {
+    const ans = document.getElementById('answer-text')?.value.trim();
+    if (!ans) { showToast('پاسخ را بنویسید'); return; }
+    const questions = JSON.parse(localStorage.getItem('support_questions')||'[]');
+    const i = questions.findIndex(q=>q.id===currentQuestionId);
+    if (i !== -1) { questions[i].answer = ans; localStorage.setItem('support_questions', JSON.stringify(questions)); showToast('پاسخ ثبت شد'); closeModal('answer-modal'); openAdminSupport(); }
+}
+
+// =============================================
+// WINDOW EVENTS
+// =============================================
+window.addEventListener('click', e => {
+    // Close modals on overlay click
+});
+
+window.addEventListener('keydown', e => {
+    if (currentTab === 'basic') {
+        if (e.key >= '0' && e.key <= '9') { inputDigit(parseInt(e.key)); playClick(); }
+        else if (e.key==='+') handleOp('+');
+        else if (e.key==='-') handleOp('-');
+        else if (e.key==='*') handleOp('*');
+        else if (e.key==='/') { e.preventDefault(); handleOp('/'); }
+        else if (e.key==='.') inputDot();
+        else if (e.key==='Enter'||e.key==='=') { handleEqual(); playClick('eq'); }
+        else if (e.key==='Backspace') { if(displayVal.length>1) displayVal=displayVal.slice(0,-1); else displayVal='0'; updateDisplay(); }
+        else if (e.key==='Escape') handleClear();
+    }
+});
+
+</script>
+</body>
+</html>
